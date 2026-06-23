@@ -15,7 +15,7 @@ class ChallengeController extends Controller
     public function index(Request $request)
     {
         return Inertia::render('Challenges/Index', [
-            'challenges' => Challenge::where('user_id', $request->user()->id)->latest()->get()
+            'challenges' => Challenge::where('user_id', $request->user()->id)->latest()->paginate(10)
         ]);
     }
 
@@ -33,17 +33,21 @@ class ChallengeController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'event_name' => 'nullable|string|max:255',
             'title' => 'required|string|max:255',
             'category' => 'required|string',
             'difficulty' => 'required|string',
             'status' => 'required|string',
+            'points' => 'nullable|integer',
+            'flag' => 'nullable|string|max:255',
+            'description' => 'nullable|string',
+            'writeup' => 'nullable|string',
         ]);
 
         $validated['user_id'] = $request->user()->id;
-        $validated['slug'] = Str::slug($validated['title']) . '-' . uniqid();
+        $validated['slug'] = \Illuminate\Support\Str::slug($validated['title']) . '-' . uniqid();
 
         Challenge::create($validated);
-
         return redirect()->route('challenges.index');
     }
 
@@ -62,17 +66,36 @@ class ChallengeController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(\Illuminate\Http\Request $request, Challenge $challenge)
     {
-        //
+        if ($challenge->user_id !== $request->user()->id) abort(403);
+
+        return \Inertia\Inertia::render('Challenges/Edit', [
+            'challenge' => $challenge
+        ]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, Challenge $challenge)
     {
-        //
+        if ($challenge->user_id !== $request->user()->id) abort(403);
+
+        $validated = $request->validate([
+            'event_name' => 'nullable|string|max:255',
+            'title' => 'required|string|max:255',
+            'category' => 'required|string',
+            'difficulty' => 'required|string',
+            'status' => 'required|string',
+            'points' => 'nullable|integer',
+            'flag' => 'nullable|string|max:255',
+            'description' => 'nullable|string',
+            'writeup' => 'nullable|string',
+        ]);
+
+        $challenge->update($validated);
+        return redirect()->route('challenges.show', $challenge->id);
     }
 
     /**

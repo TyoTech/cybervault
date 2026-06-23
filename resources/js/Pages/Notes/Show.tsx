@@ -6,6 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import MarkdownViewer from '@/Components/UI/MarkdownViewer';
 
 interface NoteProps {
     note: {
@@ -55,32 +56,8 @@ export default function NoteShow({ note }: NoteProps) {
                     <p className="text-sm text-zinc-500 mt-2">Dibuat pada {formatDate(note.created_at)}</p>
                 </div>
 
-                <div className="prose prose-invert prose-blue max-w-none">
-                    <ReactMarkdown
-                        remarkPlugins={[remarkGfm]}
-                        components={{
-                            code({node, inline, className, children, ...props}: any) {
-                                const match = /language-(\w+)/.exec(className || '');
-                                return !inline && match ? (
-                                    <SyntaxHighlighter
-                                        style={vscDarkPlus as any}
-                                        language={match[1]}
-                                        PreTag="div"
-                                        className="mt-0! bg-[#0d0d0d]! border! border-white/5! rounded-xl!"
-                                        {...props}
-                                    >
-                                        {String(children).replace(/\n$/, '')}
-                                    </SyntaxHighlighter>
-                                ) : (
-                                    <code className="bg-zinc-800/50 px-1.5 py-0.5 rounded text-blue-300 font-mono text-sm" {...props}>
-                                        {children}
-                                    </code>
-                                );
-                            }
-                        }}
-                    >
-                        {note.content}
-                    </ReactMarkdown>
+                <div className="mt-6 bg-zinc-950/50 rounded-lg border border-white/5 p-6">
+                    <MarkdownViewer content={note.content} />
                 </div>
             </div>
         </AuthenticatedLayout>

@@ -15,7 +15,7 @@ class NoteController extends Controller
     public function index(Request $request)
     {
         return Inertia::render('Notes/Index', [
-            'notes' => Note::where('user_id', $request->user()->id)->latest()->get()
+            'notes' => Note::where('user_id', $request->user()->id)->latest()->paginate(10)
         ]);
     }
 

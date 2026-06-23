@@ -6,11 +6,13 @@ import Input from '@/Components/UI/Input';
 import Button from '@/Components/UI/Button';
 import EmptyState from '@/Components/UI/EmptyState';
 import { Search, Plus, Tag, Clock, BookX } from 'lucide-react';
+import Pagination from '@/Components/UI/Pagination';
 
-export default function NotesIndex({ notes = [] }: { notes: any[] }) {
+export default function NotesIndex({ notes }: { notes: any }) {
+    const notesData = notes.data || [];
     const [searchQuery, setSearchQuery] = useState('');
 
-    const filteredNotes = notes.filter(note =>
+    const filteredNotes = notesData.filter((note: any) =>
         note.title.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
@@ -41,18 +43,21 @@ export default function NotesIndex({ notes = [] }: { notes: any[] }) {
                 />
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredNotes.map(note => (
+                    {filteredNotes.map((note: any) => (
                         <Card key={note.id} className="hover:border-blue-500/50 transition-colors">
                             <CardContent className="p-5">
                                 <Link href={route('notes.show', note.id)}>
                                     <h3 className="font-semibold text-lg text-zinc-100 hover:text-blue-400">{note.title}</h3>
                                 </Link>
-                                <p className="text-sm text-zinc-400 mt-2 line-clamp-3">{note.content}</p>
+                                <p className="text-sm text-zinc-400 mt-2 line-clamp-3">
+                                    {note.content.replace(/!\[.*?\]\(.*?\)/g, '[foto]')}
+                                </p>
                             </CardContent>
                         </Card>
                     ))}
                 </div>
             )}
+            <Pagination links={notes.links} />
         </AuthenticatedLayout>
     );
 }

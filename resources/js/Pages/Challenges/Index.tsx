@@ -7,11 +7,13 @@ import Button from '@/Components/UI/Button';
 import Badge from '@/Components/UI/Badge';
 import EmptyState from '@/Components/UI/EmptyState';
 import { Search, Plus, ShieldAlert, CheckCircle2, Circle } from 'lucide-react';
+import Pagination from '@/Components/UI/Pagination';
 
-export default function ChallengeIndex({ challenges = [] }: { challenges: any[] }) {
+export default function ChallengeIndex({ challenges }: { challenges: any }) {
     const [searchQuery, setSearchQuery] = useState('');
+    const challengesData = challenges.data || [];
 
-    const filteredChallenges = challenges.filter(c =>
+    const filteredChallenges = challengesData.filter((c: any) =>
         c.title.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
@@ -43,7 +45,7 @@ export default function ChallengeIndex({ challenges = [] }: { challenges: any[] 
                     />
                 ) : (
                     <div className="divide-y divide-white/5">
-                        {filteredChallenges.map(challenge => (
+                        {filteredChallenges.map((challenge: any) => (
                             <div key={challenge.id} className="flex items-center justify-between p-4 hover:bg-white/5 transition-colors group">
                                 <div className="flex items-center gap-4">
                                     {challenge.status === 'Solved' ? (
@@ -71,6 +73,7 @@ export default function ChallengeIndex({ challenges = [] }: { challenges: any[] 
                     </div>
                 )}
             </Card>
+            <Pagination links={challenges.links} />
         </AuthenticatedLayout>
     );
 }

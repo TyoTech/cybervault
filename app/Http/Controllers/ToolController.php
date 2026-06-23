@@ -15,7 +15,7 @@ class ToolController extends Controller
     public function index(Request $request)
     {
         return Inertia::render('Tools/Index', [
-            'tools' => Tool::where('user_id', $request->user()->id)->latest()->get()
+            'tools' => Tool::where('user_id', $request->user()->id)->latest()->paginate(10)
         ]);
     }
 

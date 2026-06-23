@@ -15,7 +15,9 @@ class UploadController extends Controller
         ]);
 
         $file = $request->file('file');
-
+        $filename = time() . '_' . str_replace(' ', '-', $file->getClientOriginalName());
+        $path = $file->storeAs('uploads', $filename, 'public');
+        
         // Simpan ke storage/app/public/attachments dengan nama hash acak
         $path = $file->store('attachments', 'public');
 

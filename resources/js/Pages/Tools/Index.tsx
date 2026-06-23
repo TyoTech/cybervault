@@ -7,14 +7,15 @@ import Button from '@/Components/UI/Button';
 import CopyButton from '@/Components/UI/CopyButton';
 import Badge from '@/Components/UI/Badge';
 import EmptyState from '@/Components/UI/EmptyState';
-import { Search, Plus, Wrench, ChevronRight } from 'lucide-react';
+import { Search, Plus, Wrench, ChevronRight, Edit, Trash2 } from 'lucide-react';
 import { useForm } from '@inertiajs/react';
-import { Trash2 } from 'lucide-react';
+import Pagination from '@/Components/UI/Pagination';
 
-export default function ToolIndex({ tools = [] }: { tools: any[] }) {
+export default function ToolIndex({ tools }: { tools: any }) {
     const [searchQuery, setSearchQuery] = useState('');
+    const toolsData = tools.data || [];
 
-    const filteredTools = tools.filter(tool =>
+    const filteredTools = toolsData.filter((tool: any) =>
         tool.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         tool.workflow.toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -51,7 +52,7 @@ export default function ToolIndex({ tools = [] }: { tools: any[] }) {
                 />
             ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                    {filteredTools.map(tool => (
+                    {filteredTools.map((tool: any) => (
                         <Card key={tool.id} className="flex flex-col border-white/5">
                             <CardHeader className="pb-3 border-b border-white/5">
                                 <div className="flex justify-between items-start">
@@ -61,7 +62,10 @@ export default function ToolIndex({ tools = [] }: { tools: any[] }) {
                                     </CardTitle>
                                     <div className="flex items-center gap-2">
                                         <Badge variant="outline">{tool.workflow}</Badge>
-                                        <button onClick={() => handleDelete(tool.id)} className="text-zinc-500 hover:text-red-500 transition-colors">
+                                        <Link href={route('tools.edit', tool.id)} className="text-zinc-500 hover:text-blue-400 transition-colors ml-2">
+                                            <Edit className="w-4 h-4" />
+                                        </Link>
+                                        <button onClick={() => handleDelete(tool.id)} className="text-zinc-500 hover:text-red-500 transition-colors ml-1">
                                             <Trash2 className="w-4 h-4" />
                                         </button>
                                     </div>
@@ -98,6 +102,7 @@ export default function ToolIndex({ tools = [] }: { tools: any[] }) {
                             </CardContent>
                         </Card>
                     ))}
+                    <Pagination links={tools.links} />
                 </div>
             )}
         </AuthenticatedLayout>

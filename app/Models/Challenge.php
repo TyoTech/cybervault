@@ -10,8 +10,8 @@ class Challenge extends Model
     use HasUuids;
 
     protected $fillable = [
-        'user_id', 'platform_id', 'title', 'slug', 'category',
-        'difficulty', 'status', 'writeup', 'solve_script', 'attachments'
+        'user_id', 'event_name', 'title', 'slug', 'category',
+        'difficulty', 'status', 'points', 'flag', 'description', 'writeup'
     ];
 
     protected $casts = [

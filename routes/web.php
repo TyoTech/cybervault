@@ -4,13 +4,7 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-use App\Http\Controllers\NoteController;
-use App\Models\Challenge;
-use App\Models\Note;
-use App\Models\Payload;
-use App\Models\Tool;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 Route::get('/', function () {
@@ -24,19 +18,13 @@ Route::get('/', function () {
 
 Route::get('/dashboard', function (Request $request) {
     $userId = $request->user()->id;
-
-    // Menghasilkan data 7 hari terakhir untuk grafik
     $last7Days = collect(range(6, 0))->map(function ($days) use ($userId) {
         $date = Carbon::today()->subDays($days);
         $count = \App\Models\Challenge::where('user_id', $userId)
                     ->where('status', 'Solved')
                     ->whereDate('updated_at', $date)
                     ->count();
-
-        return [
-            'name' => $date->format('d M'),
-            'solved' => $count
-        ];
+        return ['name' => $date->format('d M'), 'solved' => $count];
     });
 
     return Inertia::render('Dashboard', [
@@ -50,7 +38,7 @@ Route::get('/dashboard', function (Request $request) {
                             ->orderBy('updated_at', 'desc')
                             ->take(5)
                             ->get(['id', 'title', 'updated_at']),
-        'activityData' => $last7Days // Kirim data grafik ke React
+        'activityData' => $last7Days
     ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
@@ -58,12 +46,21 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-    Route::resource('notes', NoteController::class);
+
+    Route::resource('notes', App\Http\Controllers\NoteController::class);
     Route::resource('challenges', App\Http\Controllers\ChallengeController::class);
     Route::resource('payloads', App\Http\Controllers\PayloadController::class);
     Route::resource('tools', App\Http\Controllers\ToolController::class);
-    Route::post('/upload', [App\Http\Controllers\UploadController::class, 'store'])->name('upload');
-    Route::get('/api/search', [App\Http\Controllers\SearchController::class, 'index'])->name('search.api');
+
+    // Rate limit 10 request per menit untuk cegah spam upload
+    Route::post('/upload', [App\Http\Controllers\UploadController::class, 'store'])
+        ->middleware('throttle:10,1')
+        ->name('upload');
+
+    // Rate limit 60 request per menit untuk pencarian
+    Route::get('/api/search', [App\Http\Controllers\SearchController::class, 'index'])
+        ->middleware('throttle:60,1')
+        ->name('search');
 });
 
 require __DIR__.'/auth.php';

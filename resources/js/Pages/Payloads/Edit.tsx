@@ -37,7 +37,7 @@ export default function PayloadEdit({ payload }: { payload: any }) {
 
                 <div>
                     <label className="block text-sm font-medium text-zinc-300 mb-1.5">Kategori</label>
-                    <select value={data.category} onChange={(e) => setData('category', e.target.value)} className="flex h-10 w-full rounded-md border border-white/10 bg-zinc-900/50 px-3 py-2 text-sm text-zinc-100 focus:ring-1 focus:ring-blue-500/50 focus:outline-none">
+                    <select value={data.category} onChange={(e) => setData('category', e.target.value)} className="flex h-10 w-full rounded-md border border-white/10 bg-zinc-900/50 px-3 py-2 text-sm text-zinc-100 outline-none">
                         {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
                 </div>
@@ -49,7 +49,8 @@ export default function PayloadEdit({ payload }: { payload: any }) {
 
                 <div>
                     <label className="block text-sm font-medium text-zinc-300 mb-1.5">Kode/Script Payload</label>
-                    <textarea value={data.content} onChange={(e) => setData('content', e.target.value)} className="w-full h-48 rounded-md border border-white/10 bg-zinc-950/80 p-4 text-sm text-zinc-100 font-mono focus:ring-1 focus:ring-blue-500/50 focus:outline-none resize-y" required />
+                    <textarea value={data.content} onChange={(e) => setData('content', e.target.value)} className="w-full h-48 rounded-md border border-white/10 bg-zinc-950/80 p-4 text-sm text-zinc-100 font-mono outline-none resize-y" required />
+                    <p className="text-xs text-zinc-500 mt-2">Tips: Gunakan <code className="text-blue-400">[LHOST]</code> dan <code className="text-blue-400">[LPORT]</code> pada script. Nilai dapat diisi dinamis di halaman Index.</p>
                     {errors.content && <p className="text-red-500 text-xs mt-1">{errors.content}</p>}
                 </div>
 

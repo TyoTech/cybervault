@@ -15,7 +15,7 @@ class PayloadController extends Controller
     public function index(Request $request)
     {
         return Inertia::render('Payloads/Index', [
-            'payloads' => Payload::where('user_id', $request->user()->id)->latest()->get()
+            'payloads' => Payload::where('user_id', $request->user()->id)->latest()->paginate(10)
         ]);
     }
 

@@ -1,6 +1,6 @@
-import { PropsWithChildren, ReactNode, useEffect } from 'react'; 
+import { PropsWithChildren, ReactNode, useEffect } from 'react';
 import { Link, usePage } from '@inertiajs/react';
-import { LayoutDashboard, Book, Shield, Terminal, Wrench, LogOut, Search } from 'lucide-react';
+import { LayoutDashboard, Book, Shield, Terminal, Wrench, LogOut, Search, Settings } from 'lucide-react';
 import { Toaster, toast } from 'sonner'; // Tambah toast
 import CommandPalette from '@/Components/UI/CommandPalette';
 
@@ -21,6 +21,7 @@ export default function Authenticated({ header, children }: PropsWithChildren<{ 
         { name: 'Challenges', href: route('challenges.index'), icon: Shield, active: route().current('challenges.*') },
         { name: 'Payloads', href: route('payloads.index'), icon: Terminal, active: route().current('payloads.*') },
         { name: 'Tools', href: route('tools.index'), icon: Wrench, active: route().current('tools.*') },
+        { name: 'Settings', href: route('profile.edit'), icon: Settings, active: route().current('profile.*') },
     ];
 
     return (

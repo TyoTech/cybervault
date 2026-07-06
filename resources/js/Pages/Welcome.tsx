@@ -10,7 +10,7 @@ export default function Welcome({ auth }: { auth: any }) {
                         CyberVault
                     </h1>
                     <p className="text-lg text-gray-400 mb-8">
-                        Sistem Manajemen WiFi & Keamanan Jaringan
+                        Sistem pencatatan dan pembuatan writeup untuk keamanan siber. Buat catatan, simpan writeup, dan tingkatkan keterampilan keamanan siber Anda dengan mudah.
                     </p>
 
                     <div className="flex justify-center gap-4">

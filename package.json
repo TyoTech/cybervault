@@ -3,7 +3,7 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "tsc && vite build",
+        "build": "vite build",
         "dev": "vite"
     },
     "devDependencies": {

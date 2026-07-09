@@ -60,6 +60,12 @@ return [
             'report' => false,
         ],
 
+        'cyber' => [
+            'driver' => 'local',
+            'root' => '/home/tyo/cyber',
+            'throw' => false,
+        ],
+
     ],
 
     /*

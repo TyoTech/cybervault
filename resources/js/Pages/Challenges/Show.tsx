@@ -1,21 +1,21 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, router } from '@inertiajs/react';
 import Badge from '@/Components/UI/Badge';
 import Button from '@/Components/UI/Button';
-import MarkdownViewer from '@/Components/UI/MarkdownViewer';
-import CopyButton from '@/Components/UI/CopyButton';
-import { Shield, ArrowLeft, Trash2, Edit, Trophy, Flag, Star } from 'lucide-react';
+import { Shield, ArrowLeft, Trash2, Edit, Folder, FolderOpen } from 'lucide-react';
 
 export default function ChallengeShow({ challenge }: { challenge: any }) {
     const { delete: destroy, processing } = useForm();
 
     const handleDelete = () => {
-        if (confirm('Hapus challenge ini dari tracker?')) destroy(route('challenges.destroy', challenge.id));
+        if (confirm('Hapus challenge ini? Folder di laptop tidak akan terhapus otomatis.')) {
+            destroy(route('challenges.destroy', challenge.id));
+        }
     };
 
     return (
         <AuthenticatedLayout header="Detail Challenge">
-            <Head title={challenge.title} />
+            <Head title={challenge.judul} />
 
             <div className="mb-8 flex justify-between items-start">
                 <div>
@@ -23,14 +23,11 @@ export default function ChallengeShow({ challenge }: { challenge: any }) {
                         <ArrowLeft className="w-4 h-4 mr-1" /> Kembali
                     </Link>
                     <h1 className="text-3xl font-bold text-zinc-100 flex items-center gap-3">
-                        {challenge.title}
-                        <Badge variant={challenge.status === 'Solved' ? 'success' : 'warning'}>{challenge.status}</Badge>
+                        {challenge.judul}
                     </h1>
                     <div className="flex items-center gap-4 mt-3 text-sm text-zinc-400">
-                        {challenge.event_name && <span className="flex items-center"><Trophy className="w-4 h-4 mr-1.5" /> {challenge.event_name}</span>}
-                        <span className="flex items-center"><Shield className="w-4 h-4 mr-1.5" /> {challenge.category}</span>
-                        <Badge variant="outline">{challenge.difficulty}</Badge>
-                        {challenge.points && <span className="flex items-center"><Star className="w-4 h-4 mr-1.5" /> {challenge.points} Pts</span>}
+                        <span className="flex items-center"><Shield className="w-4 h-4 mr-1.5" /> {challenge.kategori}</span>
+                        <Badge variant="outline">{challenge.lab}</Badge>
                     </div>
                 </div>
 
@@ -44,34 +41,18 @@ export default function ChallengeShow({ challenge }: { challenge: any }) {
                 </div>
             </div>
 
-            {challenge.flag && (
-                <div className="mb-8 bg-zinc-900/50 border border-emerald-500/20 p-4 rounded-xl flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <Flag className="w-5 h-5 text-emerald-500" />
+            <div className="space-y-8">
+                <div className="bg-zinc-950/50 border border-white/5 p-6 rounded-xl flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                        <Folder className="w-10 h-10 text-blue-500" />
                         <div>
-                            <p className="text-xs text-zinc-500 mb-0.5">Flag Tersimpan</p>
-                            <code className="text-emerald-400 font-mono text-sm">{challenge.flag}</code>
+                            <h3 className="text-lg font-semibold text-zinc-200">Lokasi Penyimpanan Lokal</h3>
+                            <p className="text-zinc-400 font-mono text-sm mt-1">/home/tyo/cyber/{challenge.path_folder}</p>
                         </div>
                     </div>
-                    <CopyButton value={challenge.flag} />
-                </div>
-            )}
-
-            <div className="space-y-8">
-                {challenge.description && (
-                    <div className="bg-zinc-950/50 border border-white/5 p-6 rounded-xl">
-                        <h3 className="text-lg font-semibold text-zinc-200 mb-4 border-b border-white/5 pb-2">Deskripsi Soal</h3>
-                        <MarkdownViewer content={challenge.description} />
-                    </div>
-                )}
-
-                <div className="bg-zinc-950/50 border border-white/5 p-6 rounded-xl">
-                    <h3 className="text-lg font-semibold text-zinc-200 mb-4 border-b border-white/5 pb-2">Writeup / Dokumentasi</h3>
-                    {challenge.writeup ? (
-                        <MarkdownViewer content={challenge.writeup} />
-                    ) : (
-                        <p className="text-zinc-500 text-sm">Belum ada writeup untuk challenge ini.</p>
-                    )}
+                    <Button variant="secondary" onClick={() => router.post(route('challenges.openFolder', challenge.id))}>
+                        <FolderOpen className="w-4 h-4 mr-2" /> Buka Folder
+                    </Button>
                 </div>
             </div>
         </AuthenticatedLayout>

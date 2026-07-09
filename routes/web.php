@@ -16,31 +16,9 @@ Route::get('/', function () {
     ]);
 });
 
-Route::get('/dashboard', function (Request $request) {
-    $userId = $request->user()->id;
-    $last7Days = collect(range(6, 0))->map(function ($days) use ($userId) {
-        $date = Carbon::today()->subDays($days);
-        $count = \App\Models\Challenge::where('user_id', $userId)
-                    ->where('status', 'Solved')
-                    ->whereDate('updated_at', $date)
-                    ->count();
-        return ['name' => $date->format('d M'), 'solved' => $count];
-    });
-
-    return Inertia::render('Dashboard', [
-        'stats' => [
-            'challenges_solved' => \App\Models\Challenge::where('user_id', $userId)->where('status', 'Solved')->count(),
-            'total_notes' => \App\Models\Note::where('user_id', $userId)->count(),
-            'total_payloads' => \App\Models\Payload::where('user_id', $userId)->count(),
-            'total_tools' => \App\Models\Tool::where('user_id', $userId)->count(),
-        ],
-        'recentDrafts' => \App\Models\Note::where('user_id', $userId)
-                            ->orderBy('updated_at', 'desc')
-                            ->take(5)
-                            ->get(['id', 'title', 'updated_at']),
-        'activityData' => $last7Days
-    ]);
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -61,6 +39,22 @@ Route::middleware('auth')->group(function () {
     Route::get('/api/search', [App\Http\Controllers\SearchController::class, 'index'])
         ->middleware('throttle:60,1')
         ->name('search');
+
+    // Route untuk membuka folder fisik challenge
+    Route::post('/challenges/{challenge}/open-folder', [App\Http\Controllers\ChallengeController::class, 'openFolder'])->name('challenges.openFolder');
+    Route::delete('/challenges/{challenge}/delete-file', [App\Http\Controllers\ChallengeController::class, 'deleteFile'])->name('challenges.deleteFile');
+
+    // API untuk mendapatkan daftar lab, kategori, dan cek keberadaan folder
+    Route::get('/api/labs', [App\Http\Controllers\ChallengeController::class, 'labs'])
+        ->name('api.labs');
+    Route::get('/api/labs/{lab}/categories', [App\Http\Controllers\ChallengeController::class, 'categories'])
+        ->name('api.categories');
+    Route::get('/api/labs/{lab}/check', [App\Http\Controllers\ChallengeController::class, 'checkLab'])
+        ->name('api.labs.check');
+    Route::get('/api/labs/{lab}/{category}/check', [App\Http\Controllers\ChallengeController::class, 'checkCategory'])
+        ->name('api.categories.check');
+    Route::post('/api/title/check', [App\Http\Controllers\ChallengeController::class, 'checkTitle'])
+        ->name('api.title.check');
 });
 
 require __DIR__.'/auth.php';

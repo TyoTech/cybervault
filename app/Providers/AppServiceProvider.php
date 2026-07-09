@@ -26,11 +26,5 @@ class AppServiceProvider extends ServiceProvider
         // Aktifkan strict mode hanya saat development.
         // Saat production, aplikasi tidak akan crash tapi performa tetap terjaga.
         Model::shouldBeStrict(! app()->isProduction());
-
-
-        // paksa semua URL menggunakan HTTPS saat aplikasi berjalan di lingkungan selain local.
-        if (env('APP_ENV') !== 'local') {
-            URL::forceScheme('https');
-        }
     }
 }

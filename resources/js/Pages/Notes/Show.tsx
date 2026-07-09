@@ -1,33 +1,16 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, router } from '@inertiajs/react';
 import Button from '@/Components/UI/Button';
-import { ArrowLeft, Trash2, Edit } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import MarkdownViewer from '@/Components/UI/MarkdownViewer';
+import { ArrowLeft, Trash2, Edit, FolderOpen } from 'lucide-react';
+import 'react-quill/dist/quill.snow.css';
 
-interface NoteProps {
-    note: {
-        id: string;
-        title: string;
-        content: string;
-        created_at: string;
-    };
-}
-
-export default function NoteShow({ note }: NoteProps) {
+export default function NoteShow({ note }: { note: any }) {
     const { delete: destroy, processing } = useForm();
 
     const handleDelete = () => {
-        if (confirm('Apakah Anda yakin ingin menghapus catatan ini?')) {
+        if (confirm('Hapus catatan beserta file DOCX di dalamnya?')) {
             destroy(route('notes.destroy', note.id));
         }
-    };
-
-    const formatDate = (dateString: string) => {
-        return new Intl.DateTimeFormat('id-ID', { dateStyle: 'long', timeStyle: 'short' }).format(new Date(dateString));
     };
 
     return (
@@ -36,14 +19,15 @@ export default function NoteShow({ note }: NoteProps) {
 
             <div className="max-w-4xl space-y-6">
                 <div className="flex items-center justify-between">
-                    <Link href={route('notes.index')} className="flex items-center text-sm text-zinc-400 hover:text-zinc-200 transition-colors">
-                        <ArrowLeft className="w-4 h-4 mr-2" /> Kembali ke Vault
+                    <Link href={route('notes.index')} className="flex items-center text-sm text-zinc-400 hover:text-zinc-200">
+                        <ArrowLeft className="w-4 h-4 mr-2" /> Kembali
                     </Link>
                     <div className="flex gap-2">
+                        <Button variant="secondary" onClick={() => router.post(route('notes.openFolder', note.id))}>
+                            <FolderOpen className="w-4 h-4 mr-2" /> Buka Folder
+                        </Button>
                         <Link href={route('notes.edit', note.id)}>
-                            <Button variant="secondary">
-                                <Edit className="w-4 h-4 mr-2" /> Edit
-                            </Button>
+                            <Button variant="secondary"><Edit className="w-4 h-4 mr-2" /> Edit</Button>
                         </Link>
                         <Button variant="danger" onClick={handleDelete} disabled={processing}>
                             <Trash2 className="w-4 h-4 mr-2" /> Hapus
@@ -53,11 +37,13 @@ export default function NoteShow({ note }: NoteProps) {
 
                 <div className="border-b border-white/10 pb-6">
                     <h1 className="text-3xl font-bold text-zinc-100">{note.title}</h1>
-                    <p className="text-sm text-zinc-500 mt-2">Dibuat pada {formatDate(note.created_at)}</p>
                 </div>
 
-                <div className="mt-6 bg-zinc-950/50 rounded-lg border border-white/5 p-6">
-                    <MarkdownViewer content={note.content} />
+                <div className="mt-6 rounded-lg border border-zinc-700 bg-[#09090b] overflow-hidden">
+                    <div
+                        className="ql-editor p-6"
+                        dangerouslySetInnerHTML={{ __html: note.content }}
+                    />
                 </div>
             </div>
         </AuthenticatedLayout>

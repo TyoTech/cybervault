@@ -55,6 +55,10 @@ Route::middleware('auth')->group(function () {
         ->name('api.categories.check');
     Route::post('/api/title/check', [App\Http\Controllers\ChallengeController::class, 'checkTitle'])
         ->name('api.title.check');
+
+    // Route untuk membuka folder fisik note
+    Route::post('/notes/{note}/open-folder', [App\Http\Controllers\NoteController::class, 'openFolder'])->name('notes.openFolder');
+    Route::get('/notes/{note}/images/{filename}', [App\Http\Controllers\NoteController::class, 'serveImage'])->name('notes.image');
 });
 
 require __DIR__.'/auth.php';

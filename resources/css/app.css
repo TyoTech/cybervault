@@ -21,4 +21,13 @@
     ::-webkit-scrollbar-thumb {
         @apply bg-zinc-800 rounded-full hover:bg-zinc-700 transition-colors;
     }
+
+    /* Kustomisasi Quill Editor untuk mode gelap */
+    .ql-toolbar, .ql-container { border-color: #3f3f46 !important; }
+    .ql-toolbar { background-color: #18181b; border-top-left-radius: 0.5rem; border-top-right-radius: 0.5rem; }
+    .ql-toolbar .ql-stroke { stroke: #d4d4d8 !important; }
+    .ql-toolbar .ql-fill { fill: #d4d4d8 !important; }
+    .ql-toolbar .ql-picker { color: #d4d4d8 !important; }
+    .ql-editor { background-color: #09090b; color: #e4e4e7; min-height: 400px; border-bottom-left-radius: 0.5rem; border-bottom-right-radius: 0.5rem; }
+    .ql-editor img { cursor: nwse-resize; }
 }

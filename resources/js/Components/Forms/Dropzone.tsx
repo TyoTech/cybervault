@@ -60,7 +60,7 @@ export default function Dropzone({ onUploadSuccess, className, accept }: Dropzon
         <div
             className={cn(
                 "relative flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-xl transition-all",
-                isDragging ? "border-blue-500 bg-blue-500/10" : "border-white/10 bg-zinc-900/50 hover:bg-zinc-800/50 hover:border-white/20",
+                isDragging ? "border-accent bg-accent/10" : "border-edge bg-surface hover:bg-elevated hover:border-edge-strong",
                 isUploading && "opacity-50 pointer-events-none",
                 className
             )}
@@ -78,26 +78,26 @@ export default function Dropzone({ onUploadSuccess, className, accept }: Dropzon
             />
 
             {isUploading ? (
-                <div className="flex flex-col items-center text-blue-500">
+                <div className="flex flex-col items-center text-accent">
                     <Loader2 className="w-8 h-8 animate-spin mb-2" />
                     <span className="text-sm font-medium">Mengenkripsi & Mengunggah...</span>
                 </div>
             ) : (
-                <div className="flex flex-col items-center text-zinc-400">
-                    <div className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center mb-3">
-                        <UploadCloud className="w-6 h-6 text-zinc-300" />
+                <div className="flex flex-col items-center text-muted">
+                    <div className="w-12 h-12 rounded-full bg-elevated border border-edge flex items-center justify-center mb-3">
+                        <UploadCloud className="w-6 h-6 text-muted" />
                     </div>
-                    <span className="text-sm font-medium text-zinc-200">
+                    <span className="text-sm font-medium text-strong">
                         Klik atau Drag & Drop file ke sini
                     </span>
-                    <span className="text-xs text-zinc-500 mt-1">
+                    <span className="text-xs text-faint mt-1">
                         Mendukung PDF, ZIP, PCAP, JPG, PNG (Max 10MB)
                     </span>
                 </div>
             )}
 
             {error && (
-                <div className="absolute bottom-2 text-xs text-red-500 flex items-center bg-red-500/10 px-2 py-1 rounded">
+                <div className="absolute bottom-2 text-xs text-danger flex items-center bg-danger/10 px-2 py-1 rounded" role="alert">
                     <X className="w-3 h-3 mr-1" /> {error}
                 </div>
             )}

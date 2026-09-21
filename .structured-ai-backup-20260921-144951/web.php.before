@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -21,6 +21,9 @@ Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'inde
     ->name('dashboard');
 
 Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::resource('notes', App\Http\Controllers\NoteController::class);
     Route::resource('challenges', App\Http\Controllers\ChallengeController::class);
@@ -45,7 +48,7 @@ Route::middleware('auth')->group(function () {
     // - auth group + ownership check di controller;
     // - throttle 5/menit (request AI mahal, model lokal tetap butuh resource);
     // - READ-ONLY terhadap writeup: AI hanya memberi saran, tidak pernah menyimpan.
-    Route::post('/challenges/ai/assist', [App\Http\Controllers\ChallengeController::class, 'assistStructured'])
+    Route::post('/challenges/{challenge}/ai/assist', [App\Http\Controllers\ChallengeController::class, 'assist'])
         ->middleware('throttle:5,1')
         ->name('challenges.ai.assist');
 
@@ -71,19 +74,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/notes/{note}/ai/improve', [App\Http\Controllers\NoteController::class, 'improve'])
         ->middleware('throttle:5,1')
         ->name('notes.ai.improve');
-
-    Route::get('/settings', [SettingsController::class, 'edit'])
-        ->name('settings.edit');
-
-    Route::patch('/settings/profile', [SettingsController::class, 'updateProfile'])
-        ->name('settings.profile.update');
-
-    Route::delete('/settings/account', [SettingsController::class, 'destroyAccount'])
-        ->name('settings.account.destroy');
-
-    Route::patch('/settings/storage', [SettingsController::class, 'updateStorage'])
-        ->name('settings.storage.update');
-        
 });
 
 require __DIR__.'/auth.php';

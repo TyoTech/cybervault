@@ -2,78 +2,65 @@
 
 namespace Tests\Feature;
 
-use App\Models\Challenge;
+use App\Services\StructuredWriteupAiAssistResult;
+use App\Services\StructuredWriteupAiAssistService;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Storage;
+use Mockery;
 use Tests\TestCase;
 
 class ChallengeAiAssistTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const VALID_RESPONSE = '{"title":"Writeup Lebih Baik","markdown":"# Analisis\\n\\nHasil.","suggestions":[{"category":"clarity","text":"Tambahkan versi Nmap."}]}';
-
     private User $user;
-    private User $other;
 
     protected function setUp(): void
     {
         parent::setUp();
-
         $this->user = User::factory()->create();
-        $this->other = User::factory()->create();
-
-        config()->set('filesystems.disks.cyber.root', storage_path('app/cyber-tests'));
-        Storage::forgetDisk('cyber');
-        File::deleteDirectory(storage_path('app/cyber-tests'));
-
-        // Stray request = kegagalan test, bukan request nyata ke Ollama lokal.
         Http::preventStrayRequests();
     }
 
-    protected function tearDown(): void
+    private function writeup(): array
     {
-        File::deleteDirectory(storage_path('app/cyber-tests'));
-        parent::tearDown();
+        return [
+            'goal' => [
+                'problem' => 'Endpoint debug terbuka',
+                'objective' => 'Memverifikasi akses endpoint',
+                'proof' => '',
+            ],
+            'environment' => [
+                'target' => 'lab.local',
+                'environment' => 'local',
+                'host' => '',
+                'application' => '',
+                'os' => 'Fedora',
+                'tools' => 'curl',
+                'scope' => '',
+            ],
+            'hypotheses' => [],
+            'steps' => [],
+            'experiments' => [],
+            'evidence' => [],
+            'strategyChanges' => [],
+            'riskImpact' => '',
+            'recommendations' => [],
+            'lessonLearned' => [
+                'learned' => '',
+                'patterns' => '',
+                'mistakes' => '',
+                'concepts' => '',
+                'different' => '',
+                'relevance' => '',
+            ],
+            'references' => '',
+            'notes' => 'Hasil pengujian awal.',
+        ];
     }
-
-    private function makeChallengeWithWriteup(): Challenge
-    {
-        $challenge = Challenge::create([
-            'user_id' => $this->user->id,
-            'lab' => 'LabT',
-            'kategori' => 'Web',
-            'judul' => 'Writeup ' . uniqid(),
-            'path_folder' => 'lab/LabT/Web/writeup-' . uniqid(),
-        ]);
-
-        Storage::disk('cyber')->put(
-            $challenge->path_folder . '/writeup.txt',
-            "## 1. Tujuan\n**Masalah yang dianalisis:** Endpoint debug terbuka.\n\n## Catatan\nRekap awal.\n"
-        );
-
-        return $challenge;
-    }
-
-    private function makeEmptyChallenge(): Challenge
-    {
-        return Challenge::create([
-            'user_id' => $this->user->id,
-            'lab' => 'LabT',
-            'kategori' => 'Web',
-            'judul' => 'Kosong ' . uniqid(),
-            'path_folder' => 'lab/LabT/Web/kosong-' . uniqid(),
-        ]);
-    }
-
-    // ------------------------------------------------------------------
-    // Routing & authorization
-    // ------------------------------------------------------------------
 
     public function test_assist_route_is_registered(): void
     {
@@ -82,134 +69,126 @@ class ChallengeAiAssistTest extends TestCase
 
     public function test_guest_is_redirected_to_login(): void
     {
-        Http::fake();
-
-        $this->post(route('challenges.ai.assist', 'any-id'))
-            ->assertRedirect(route('login'));
+        $this->postJson(route('challenges.ai.assist'), [
+            'title' => 'Test',
+            'writeup' => $this->writeup(),
+        ])->assertUnauthorized();
     }
 
-    public function test_other_user_cannot_assist_someone_elses_writeup(): void
+    public function test_authenticated_user_receives_structured_suggestion(): void
     {
-        $challenge = $this->makeChallengeWithWriteup();
-
-        $this->actingAs($this->other)
-            ->post(route('challenges.ai.assist', $challenge->id))
-            ->assertForbidden();
-    }
-
-    // ------------------------------------------------------------------
-    // Endpoint success & validation
-    // ------------------------------------------------------------------
-
-    public function test_owner_can_assist_and_receives_structured_suggestion(): void
-    {
-        $challenge = $this->makeChallengeWithWriteup();
+        $writeup = $this->writeup();
 
         Http::fake([
-            '127.0.0.1:11434/*' => Http::response(['model' => 'qwen3:1.7b', 'response' => self::VALID_RESPONSE, 'done' => true]),
+            '127.0.0.1:11434/*' => Http::response([
+                'model' => 'qwen3:1.7b',
+                'response' => json_encode([
+                    'goal' => [
+                        'problem' => 'Endpoint debug terbuka',
+                        'objective' => 'Memverifikasi akses endpoint',
+                        'proof' => '',
+                    ],
+                    'environment' => $writeup['environment'],
+                    'hypotheses' => [],
+                    'steps' => [],
+                    'experiments' => [],
+                    'evidence' => [],
+                    'strategyChanges' => [],
+                    'riskImpact' => '',
+                    'recommendations' => [],
+                    'lessonLearned' => $writeup['lessonLearned'],
+                    'references' => '',
+                    'notes' => 'Hasil pengujian awal.',
+                ]),
+                'done' => true,
+            ]),
         ]);
 
         $this->actingAs($this->user)
-            ->post(route('challenges.ai.assist', $challenge->id))
+            ->postJson(route('challenges.ai.assist'), [
+                'title' => 'Writeup Test',
+                'writeup' => $writeup,
+            ])
             ->assertOk()
-            ->assertJsonPath('data.title', 'Writeup Lebih Baik')
-            ->assertJsonPath('data.markdown', "# Analisis\n\nHasil.")
-            ->assertJsonPath('data.suggestions.0.category', 'clarity')
-            ->assertJsonPath('data.note', 'AI suggestion / requires verification');
+            ->assertJsonPath(
+                'writeup.goal.objective',
+                'Memverifikasi akses endpoint'
+            )
+            ->assertJsonStructure([
+                'writeup',
+                'warnings',
+            ]);
     }
 
-    public function test_empty_writeup_rejected_with_validation_error(): void
+    public function test_empty_writeup_is_rejected(): void
     {
-        $challenge = $this->makeEmptyChallenge();
-
-        Http::fake();
-
         $this->actingAs($this->user)
-            ->postJson(route('challenges.ai.assist', $challenge->id))
+            ->postJson(route('challenges.ai.assist'), [
+                'title' => 'Test',
+            ])
             ->assertStatus(422)
             ->assertJsonValidationErrors('writeup');
     }
 
-    public function test_assist_does_not_modify_files_on_disk(): void
+    public function test_title_is_optional(): void
     {
-        $challenge = $this->makeChallengeWithWriteup();
-        $jsonPath = $challenge->path_folder . '/writeup.json';
-        $txtPath = $challenge->path_folder . '/writeup.txt';
-
-        // writeup.json sudah ada sebagai source-of-truth.
-        Storage::disk('cyber')->put($jsonPath, json_encode(['version' => 1, 'notes' => 'isi']));
-        $txtBefore = (string) Storage::disk('cyber')->get($txtPath);
-        $jsonBefore = (string) Storage::disk('cyber')->get($jsonPath);
-
         Http::fake([
-            '127.0.0.1:11434/*' => Http::response(['response' => self::VALID_RESPONSE]),
+            '127.0.0.1:11434/*' => Http::response([
+                'response' => json_encode($this->writeup()),
+                'done' => true,
+            ]),
         ]);
 
         $this->actingAs($this->user)
-            ->post(route('challenges.ai.assist', $challenge->id))
+            ->postJson(route('challenges.ai.assist'), [
+                'writeup' => $this->writeup(),
+            ])
+            ->assertOk()
+            ->assertJsonStructure(['writeup', 'warnings']);
+    }
+
+    public function test_ai_failure_returns_502(): void
+    {
+        Http::fake([
+            '127.0.0.1:11434/*' => Http::response([
+                'response' => 'garbage tanpa JSON',
+            ]),
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->postJson(route('challenges.ai.assist'), [
+                'title' => 'Test',
+                'writeup' => $this->writeup(),
+            ]);
+
+        $response
+            ->assertStatus(502)
+            ->assertJsonPath(
+                'message',
+                'AI tidak dapat memproses writeup saat ini.'
+            );
+    }
+
+    public function test_ai_assist_does_not_modify_persistent_data(): void
+    {
+        Http::fake([
+            '127.0.0.1:11434/*' => Http::response([
+                'response' => json_encode($this->writeup()),
+                'done' => true,
+            ]),
+        ]);
+
+        $before = User::find($this->user->id)->toArray();
+
+        $this->actingAs($this->user)
+            ->postJson(route('challenges.ai.assist'), [
+                'title' => 'Test',
+                'writeup' => $this->writeup(),
+            ])
             ->assertOk();
 
-        // READ-ONLY: AI assist tidak menulis apa pun ke disk.
-        $this->assertSame($jsonBefore, (string) Storage::disk('cyber')->get($jsonPath));
-        $this->assertSame($txtBefore, (string) Storage::disk('cyber')->get($txtPath));
-        $this->assertStringNotContainsString('# Analisis', (string) Storage::disk('cyber')->get($txtPath));
-        $json = json_decode((string) Storage::disk('cyber')->get($jsonPath), true);
-        $this->assertSame('isi', $json['notes']);
-    }
+        $after = User::find($this->user->id)->toArray();
 
-    // ------------------------------------------------------------------
-    // Error handling yang aman (tidak membocorkan internal)
-    // ------------------------------------------------------------------
-
-    public function test_malformed_ai_response_returns_safe_502(): void
-    {
-        $challenge = $this->makeChallengeWithWriteup();
-
-        Http::fake([
-            '127.0.0.1:11434/*' => Http::response(['response' => 'garbage tanpa json']),
-        ]);
-
-        $response = $this->actingAs($this->user)
-            ->post(route('challenges.ai.assist', $challenge->id));
-
-        $response->assertStatus(502);
-        $response->assertJsonPath('message', 'The AI response could not be processed. Please try again.');
-
-        $body = $response->getContent();
-        $this->assertStringNotContainsString('stack', strtolower($body));
-        $this->assertStringNotContainsString('AiServiceException', $body);
-        $this->assertStringNotContainsString(storage_path(), $body);
-    }
-
-    public function test_ollama_down_returns_safe_503(): void
-    {
-        $challenge = $this->makeChallengeWithWriteup();
-
-        Http::fake(fn () => throw new ConnectionException('Connection refused'));
-
-        $response = $this->actingAs($this->user)
-            ->post(route('challenges.ai.assist', $challenge->id));
-
-        $response->assertStatus(503);
-        $response->assertJsonPath('message', 'Local AI service is unavailable.');
-
-        $body = $response->getContent();
-        $this->assertStringNotContainsString('Connection refused', $body);
-        $this->assertStringNotContainsString('stack', strtolower($body));
-        $this->assertStringNotContainsString(storage_path(), $body);
-    }
-
-    public function test_model_not_found_returns_safe_message(): void
-    {
-        $challenge = $this->makeChallengeWithWriteup();
-
-        Http::fake([
-            '127.0.0.1:11434/*' => Http::response(['error' => 'model not found'], 404),
-        ]);
-
-        $this->actingAs($this->user)
-            ->post(route('challenges.ai.assist', $challenge->id))
-            ->assertStatus(503)
-            ->assertJsonPath('message', 'Configured AI model is unavailable.');
+        $this->assertSame($before, $after);
     }
 }

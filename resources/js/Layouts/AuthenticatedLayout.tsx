@@ -24,7 +24,6 @@ function getNavSections() {
             items: [
                 { name: 'Dashboard', href: route('dashboard'), icon: LayoutDashboard, active: route().current('dashboard') },
                 { name: 'Notes', href: route('notes.index'), icon: Book, active: route().current('notes.*') && route().params.kind !== 'writeup' },
-                { name: 'Writeups', href: '/notes?kind=writeup', icon: FileText, active: route().current('notes.*') && route().params.kind === 'writeup' },
             ],
         },
         {
@@ -38,7 +37,7 @@ function getNavSections() {
         {
             label: 'System',
             items: [
-                { name: 'Settings', href: route('profile.edit'), icon: Settings, active: route().current('profile.*') || route().current('settings.*') },
+                { name: 'Settings', href: route('settings.edit'), icon: Settings, active: route().current('settings.*') },
             ],
         },
     ];
@@ -129,7 +128,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                     </div>
                     <div className="flex shrink-0 items-center gap-0.5">
                         <Link
-                            href={route('profile.edit')}
+                            href={route('settings.edit')}
                             aria-label="Pengaturan"
                             title="Pengaturan"
                             className="rounded-md p-1.5 text-faint transition-colors hover:bg-elevated hover:text-strong"
@@ -188,16 +187,19 @@ export default function Authenticated({ header, children }: PropsWithChildren<{ 
         };
     }, [mobileNavOpen]);
 
+    // Sonner: ikuti tema dokumen (.dark di <html>), jangan hardcode.
+    const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
+
     return (
         <div className="min-h-screen bg-canvas text-body lg:flex">
             <Toaster
-                theme="dark"
+                theme={isDark ? 'dark' : 'light'}
                 position="bottom-right"
                 toastOptions={{
                     style: {
-                        background: '#1d1f24',
-                        border: '1px solid #34373e',
-                        color: '#e4e4e7',
+                        background: 'var(--cv-elevated)',
+                        border: '1px solid var(--cv-edge-strong)',
+                        color: 'var(--cv-strong)',
                         fontSize: '14px',
                     },
                 }}

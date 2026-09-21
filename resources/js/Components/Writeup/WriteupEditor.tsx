@@ -126,210 +126,102 @@ export default function WriteupEditor({ value, onChange }: WriteupEditorProps) {
     const updateLesson = (k: keyof WriteupData['lessonLearned'], v: string) =>
         set({ lessonLearned: { ...value.lessonLearned, [k]: v } });
 
+    // ---- 
+    const [detailsOpen, setDetailsOpen] = useState(false);
+    const [enabledSections, setEnabledSections] = useState<Record<string, boolean>>({});
+
+    const hasEnvironment =
+        value.environment.environment.trim() !== '' ||
+        value.environment.host.trim() !== '' ||
+        value.environment.application.trim() !== '' ||
+        value.environment.os.trim() !== '' ||
+        value.environment.tools.trim() !== '' ||
+        value.environment.scope.trim() !== '';
+
+    const hasLessonLearned =
+        Object.values(value.lessonLearned).some((item) => item.trim() !== '');
+
+    const hasDetail = {
+        environment: hasEnvironment,
+        hypotheses: value.hypotheses.length > 0,
+        steps: value.steps.length > 0,
+        experiments: value.experiments.length > 0,
+        strategyChanges: value.strategyChanges.length > 0,
+        riskImpact: value.riskImpact.trim() !== '',
+        recommendations: value.recommendations.length > 0,
+        lessonLearned: hasLessonLearned,
+        references: value.references.trim() !== '',
+    };
+
+    const showSection = (key: string) =>
+        Boolean(enabledSections[key as keyof typeof enabledSections]) ||
+        Boolean(hasDetail[key as keyof typeof hasDetail]);
+
+    const enableSection = (key: string) => {
+        setEnabledSections((current) => ({ ...current, [key]: true }));
+        setDetailsOpen(false);
+    };
+
     return (
         <div className="space-y-4">
-            {/* 1. Tujuan */}
+            {/* Core: Target */}
             <Section
-                title="1. Tujuan"
-                description="Kerangka analisis: masalah yang dianalisis, tujuan, dan bukti yang ingin dicapai."
-                idPrefix="goal"
+                title="Target / Scope"
+                description="Target atau ruang lingkup pengujian."
+                idPrefix="target"
                 defaultOpen
             >
-                <WriteupField label="Masalah yang dianalisis">
-                    <Textarea
-                        rows={2}
-                        value={value.goal.problem}
-                        onChange={(e) => set({ goal: { ...value.goal, problem: e.target.value } })}
-                        placeholder="Contoh: Endpoint /api/v1/debug menampilkan stack trace pada input tertentu…"
-                    />
-                </WriteupField>
-                <WriteupField label="Tujuan analisis">
-                    <Textarea
-                        rows={2}
-                        value={value.goal.objective}
-                        onChange={(e) => set({ goal: { ...value.goal, objective: e.target.value } })}
-                        placeholder="Apa yang ingin Anda capai dari writeup ini."
-                    />
-                </WriteupField>
-                <WriteupField label="Yang ingin dibuktikan">
-                    <Textarea
-                        rows={2}
-                        value={value.goal.proof}
-                        onChange={(e) => set({ goal: { ...value.goal, proof: e.target.value } })}
-                        placeholder="Hipotesis atau klaim yang perlu diverifikasi dengan bukti."
+                <WriteupField label="Target">
+                    <Input
+                        value={value.environment.target}
+                        onChange={(e) =>
+                            set({
+                                environment: {
+                                    ...value.environment,
+                                    target: e.target.value,
+                                },
+                            })
+                        }
+                        placeholder="lab.local / 10.10.10.10 / URL"
                     />
                 </WriteupField>
             </Section>
 
-            {/* 2. Environment / Scope */}
+            {/* Core: Analysis */}
             <Section
-                title="2. Environment / Scope"
-                description="Lingkungan target dan batas ruang lingkup pengujian."
-                idPrefix="env"
+                title="Analysis"
+                description="Tulis apa yang kamu lakukan, temukan, coba, atau alami selama analisis."
+                idPrefix="analysis"
+                defaultOpen
             >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <WriteupField label="Target / scope">
-                        <Input
-                            value={value.environment.target}
-                            onChange={(e) => set({ environment: { ...value.environment, target: e.target.value } })}
-                            placeholder="URL / IP / nama aplikasi"
-                        />
-                    </WriteupField>
-                    <WriteupField label="Environment">
-                        <Input
-                            value={value.environment.environment}
-                            onChange={(e) => set({ environment: { ...value.environment, environment: e.target.value } })}
-                            placeholder="Prod / Staging / Lab / Lokal"
-                        />
-                    </WriteupField>
-                    <WriteupField label="IP / hostname">
-                        <Input
-                            value={value.environment.host}
-                            onChange={(e) => set({ environment: { ...value.environment, host: e.target.value } })}
-                            placeholder="10.10.10.1"
-                            className="font-mono text-[13px]"
-                        />
-                    </WriteupField>
-                    <WriteupField label="Aplikasi">
-                        <Input
-                            value={value.environment.application}
-                            onChange={(e) => set({ environment: { ...value.environment, application: e.target.value } })}
-                            placeholder="Nama paket / service"
-                        />
-                    </WriteupField>
-                    <WriteupField label="OS">
-                        <Input
-                            value={value.environment.os}
-                            onChange={(e) => set({ environment: { ...value.environment, os: e.target.value } })}
-                            placeholder="Linux / Windows / …"
-                        />
-                    </WriteupField>
-                    <WriteupField label="Tools">
-                        <Input
-                            value={value.environment.tools}
-                            onChange={(e) => set({ environment: { ...value.environment, tools: e.target.value } })}
-                            placeholder="nmap, burpsuite, sqlmap, …"
-                        />
-                    </WriteupField>
-                    <WriteupField label="Catatan scope" className="md:col-span-2">
-                        <Textarea
-                            rows={2}
-                            value={value.environment.scope}
-                            onChange={(e) => set({ environment: { ...value.environment, scope: e.target.value } })}
-                            placeholder="Batas pengujian, asumsi, eksklusi."
-                        />
-                    </WriteupField>
-                </div>
-            </Section>
+                <WriteupField label="Analisis">
+                    <Textarea
+                        rows={12}
+                        value={value.notes}
+                        onChange={(e) => set({ notes: e.target.value })}
+                        placeholder={`Contoh:
 
-            {/* 3. Hipotesis */}
-            <Section
-                title="3. Hipotesis"
-                description="Ungkapan tebakan yang BELUM terbukti. Jangan mengubah hipotesis menjadi fakta tanpa bukti."
-                count={value.hypotheses.length}
-                idPrefix="hyp"
-            >
-                {value.hypotheses.length === 0 && (
-                    <p className="text-xs text-muted">Belum ada hipotesis.</p>
-                )}
-                {value.hypotheses.map((h) => (
-                    <div
-                        key={h.id}
-                        className="flex flex-col sm:flex-row gap-3 rounded-md border border-edge bg-surface p-3"
-                    >
-                        <div className="w-full sm:w-40 shrink-0">
-                            <WriteupField label="Status">
-                                <div className="flex items-center gap-2">
-                                    <Select
-                                        value={h.status}
-                                        onChange={(e) =>
-                                            updateHypothesis(h.id, {
-                                                status: e.target.value as HypothesisItem['status'],
-                                            })
-                                        }
-                                    >
-                                        <option value="hypothesis">HYPOTHESIS</option>
-                                        <option value="verified">VERIFIED</option>
-                                        <option value="rejected">REJECTED</option>
-                                    </Select>
-                                    <StatusBadge value={h.status} tone={hypothesisStatusTone(h.status)} />
-                                </div>
-                            </WriteupField>
-                        </div>
-                        <Textarea
-                            rows={2}
-                            mono
-                            value={h.text}
-                            onChange={(e) => updateHypothesis(h.id, { text: e.target.value })}
-                            placeholder="Contoh: Parameter `id` rentan terhadap SQLi…"
-                        />
-                        <button
-                            type="button"
-                            onClick={() => removeHypothesis(h.id)}
-                            className="self-start rounded-md p-2 text-faint hover:text-danger hover:bg-danger/10 transition-colors"
-                            aria-label="Hapus hipotesis"
-                        >
-                            <Trash2 className="w-4 h-4" />
-                        </button>
-                    </div>
-                ))}
-                <AddButton onClick={addHypothesis} label="Tambah Hipotesis" />
-            </Section>
+Nmap menunjukkan port 80/tcp terbuka.
+Saya kemudian mengakses /admin dan mendapatkan HTTP 200 tanpa authentication.
 
-            {/* 4. Langkah Analisis */}
-            <Section
-                title="4. Langkah Analisis"
-                description="Urutan investigasi: tiap langkah = test/fact/result dengan command, output, dan interpretasi."
-                count={value.steps.length}
-                idPrefix="steps"
-            >
-                {value.steps.length === 0 && (
-                    <p className="text-xs text-muted">Belum ada langkah analisis.</p>
-                )}
-                {value.steps.map((step, i) => (
-                    <StepCard
-                        key={step.id}
-                        index={i}
-                        item={step}
-                        onChange={(patch) => updateStep(step.id, patch)}
-                        onRemove={() => removeStep(step.id)}
+Saya mencoba endpoint upload dengan file biasa dan berhasil.
+Saat mengirim file tertentu muncul HTTP 422, kemudian saya cek kembali field request.`}
                     />
-                ))}
-                <AddButton onClick={addStep} label="Tambah Langkah" />
+                </WriteupField>
             </Section>
 
-            {/* 5. Percobaan / Attempts */}
+            {/* Core: Evidence */}
             <Section
-                title="5. Failed Attempts / Percobaan"
-                description="Rekam kegagalan & percobaan: apa yang dicoba, hasil aktual, dan kenapa gagal."
-                count={value.experiments.length}
-                idPrefix="exp"
-            >
-                {value.experiments.length === 0 && (
-                    <p className="text-xs text-muted">Belum ada percobaan yang tercatat.</p>
-                )}
-                {value.experiments.map((exp, i) => (
-                    <ExperimentCard
-                        key={exp.id}
-                        index={i}
-                        item={exp}
-                        onChange={(patch) => updateExperiment(exp.id, patch)}
-                        onRemove={() => removeExperiment(exp.id)}
-                    />
-                ))}
-                <AddButton onClick={addExperiment} label="Tambah Percobaan" />
-            </Section>
-
-            {/* 6. Bukti / Evidence */}
-            <Section
-                title="6. Bukti / Evidence"
-                description="Bukti VERBATIM dari command/output/response — jangan mengarang bukti."
+                title="Evidence"
+                description="Bukti teknis seperti command, output, request, response, error, atau log."
                 count={value.evidence.length}
                 idPrefix="ev"
+                defaultOpen
             >
                 {value.evidence.length === 0 && (
-                    <p className="text-xs text-muted">Belum ada bukti yang dicatat.</p>
+                    <p className="text-xs text-muted">Belum ada evidence.</p>
                 )}
+
                 {value.evidence.map((ev) => (
                     <div
                         key={ev.id}
@@ -339,10 +231,15 @@ export default function WriteupEditor({ value, onChange }: WriteupEditorProps) {
                             <WriteupField label="Label">
                                 <Input
                                     value={ev.label}
-                                    onChange={(e) => updateEvidence(ev.id, { label: e.target.value })}
-                                    placeholder="Nama bukti (opsional)"
+                                    onChange={(e) =>
+                                        updateEvidence(ev.id, {
+                                            label: e.target.value,
+                                        })
+                                    }
+                                    placeholder="Opsional"
                                 />
                             </WriteupField>
+
                             <WriteupField label="Jenis">
                                 <div className="flex items-center gap-2">
                                     <Select
@@ -360,136 +257,499 @@ export default function WriteupEditor({ value, onChange }: WriteupEditorProps) {
                                         <option value="error">ERROR</option>
                                         <option value="log">LOG</option>
                                     </Select>
-                                    <StatusBadge value={ev.kind} tone={evidenceKindTone(ev.kind)} />
+                                    <StatusBadge
+                                        value={ev.kind}
+                                        tone={evidenceKindTone(ev.kind)}
+                                    />
                                 </div>
                             </WriteupField>
-                            <button
-                                type="button"
+
+                            <RemoveButton
                                 onClick={() => removeEvidence(ev.id)}
-                                className="rounded-md p-2 text-faint hover:text-danger hover:bg-danger/10 transition-colors"
-                                aria-label="Hapus bukti"
-                            >
-                                <Trash2 className="w-4 h-4" />
-                            </button>
+                                label="Hapus evidence"
+                            />
                         </div>
-                        <WriteupField label="Konten (verbatim)">
+
+                        <WriteupField label="Content (verbatim)">
                             <Textarea
-                                rows={3}
+                                rows={4}
                                 mono
                                 value={ev.content}
-                                onChange={(e) => updateEvidence(ev.id, { content: e.target.value })}
-                                placeholder="Salin persis command, output, response, atau log di sini."
+                                onChange={(e) =>
+                                    updateEvidence(ev.id, {
+                                        content: e.target.value,
+                                    })
+                                }
+                                placeholder="Paste evidence secara verbatim."
                             />
                         </WriteupField>
                     </div>
                 ))}
-                <AddButton onClick={addEvidence} label="Tambah Bukti" />
+
+                <AddButton onClick={addEvidence} label="Tambah Evidence" />
             </Section>
 
-            {/* 7. Perubahan Strategi */}
-            <Section
-                title="7. Strategy Changes"
-                description="Keputusan pivot: mengapa mengubah arah analisis."
-                count={value.strategyChanges.length}
-                idPrefix="strat"
-            >
-                {value.strategyChanges.length === 0 && (
-                    <p className="text-xs text-muted">Belum ada perubahan strategi.</p>
-                )}
-                {value.strategyChanges.map((item) => (
-                    <TextListItem
-                        key={item.id}
-                        item={item}
-                        onChange={(text) => updateTextItem('strategyChanges', item.id, text)}
-                        onRemove={() => removeTextItem('strategyChanges', item.id)}
+            {/* Detail menu */}
+            <div className="rounded-md border border-edge bg-surface p-3">
+                <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setDetailsOpen((v) => !v)}
+                >
+                    <Plus className="w-3.5 h-3.5" />
+                    Tambahkan detail
+                    <ChevronDown
+                        className={cn(
+                            'w-4 h-4 transition-transform',
+                            detailsOpen && 'rotate-180',
+                        )}
                     />
-                ))}
-                <AddButton onClick={() => addTextItem('strategyChanges')} label="Tambah Perubahan Strategi" />
-            </Section>
+                </Button>
 
-            {/* 8. Risiko / Impact */}
-            <Section title="8. Risk / Impact" description="Risiko sisa dan dampak dari temuan." idPrefix="risk">
-                <Textarea
-                    rows={3}
-                    value={value.riskImpact}
-                    onChange={(e) => set({ riskImpact: e.target.value })}
-                    placeholder="Risiko yang tersisa, dampak ke produksi/klien, mitigasi…"
-                />
-            </Section>
-
-            {/* 9. Rekomendasi */}
-            <Section
-                title="9. Rekomendasi"
-                description="Langkah perbaikan yang bisa ditindaklanjuti."
-                count={value.recommendations.length}
-                idPrefix="rec"
-            >
-                {value.recommendations.length === 0 && (
-                    <p className="text-xs text-muted">Belum ada rekomendasi.</p>
+                {detailsOpen && (
+                    <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                        {[
+                            ['environment', 'Environment'],
+                            ['hypotheses', 'Hipotesis'],
+                            ['steps', 'Langkah Analisis'],
+                            ['experiments', 'Failed Attempt'],
+                            ['strategyChanges', 'Perubahan Strategi'],
+                            ['riskImpact', 'Risk / Impact'],
+                            ['recommendations', 'Recommendation'],
+                            ['lessonLearned', 'Lesson Learned'],
+                            ['references', 'Reference'],
+                        ].map(([key, label]) => (
+                            <button
+                                key={key}
+                                type="button"
+                                onClick={() => enableSection(key)}
+                                className="rounded-md border border-edge px-3 py-2 text-left text-sm text-body hover:bg-surface-hover transition-colors"
+                            >
+                                {label}
+                                {hasDetail[key as keyof typeof hasDetail] && (
+                                    <span className="ml-2 text-xs text-muted">
+                                        sudah ada
+                                    </span>
+                                )}
+                            </button>
+                        ))}
+                    </div>
                 )}
-                {value.recommendations.map((item) => (
-                    <TextListItem
-                        key={item.id}
-                        item={item}
-                        onChange={(text) => updateTextItem('recommendations', item.id, text)}
-                        onRemove={() => removeTextItem('recommendations', item.id)}
+            </div>
+
+            {/* Optional detail: Environment */}
+            {showSection('environment') && (
+                <Section
+                    title="Environment"
+                    description="Detail lingkungan target dan batas ruang lingkup pengujian."
+                    idPrefix="env"
+                    defaultOpen={hasEnvironment}
+                >
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <WriteupField label="Target / scope">
+                            <Input
+                                value={value.environment.target}
+                                onChange={(e) =>
+                                    set({
+                                        environment: {
+                                            ...value.environment,
+                                            target: e.target.value,
+                                        },
+                                    })
+                                }
+                                placeholder="URL / IP / nama aplikasi"
+                            />
+                        </WriteupField>
+
+                        <WriteupField label="Environment">
+                            <Input
+                                value={value.environment.environment}
+                                onChange={(e) =>
+                                    set({
+                                        environment: {
+                                            ...value.environment,
+                                            environment: e.target.value,
+                                        },
+                                    })
+                                }
+                                placeholder="Prod / Staging / Lab / Lokal"
+                            />
+                        </WriteupField>
+
+                        <WriteupField label="IP / hostname">
+                            <Input
+                                value={value.environment.host}
+                                onChange={(e) =>
+                                    set({
+                                        environment: {
+                                            ...value.environment,
+                                            host: e.target.value,
+                                        },
+                                    })
+                                }
+                                placeholder="10.10.10.1"
+                                className="font-mono text-[13px]"
+                            />
+                        </WriteupField>
+
+                        <WriteupField label="Aplikasi">
+                            <Input
+                                value={value.environment.application}
+                                onChange={(e) =>
+                                    set({
+                                        environment: {
+                                            ...value.environment,
+                                            application: e.target.value,
+                                        },
+                                    })
+                                }
+                                placeholder="Nama paket / service"
+                            />
+                        </WriteupField>
+
+                        <WriteupField label="OS">
+                            <Input
+                                value={value.environment.os}
+                                onChange={(e) =>
+                                    set({
+                                        environment: {
+                                            ...value.environment,
+                                            os: e.target.value,
+                                        },
+                                    })
+                                }
+                                placeholder="Linux / Windows / …"
+                            />
+                        </WriteupField>
+
+                        <WriteupField label="Tools">
+                            <Input
+                                value={value.environment.tools}
+                                onChange={(e) =>
+                                    set({
+                                        environment: {
+                                            ...value.environment,
+                                            tools: e.target.value,
+                                        },
+                                    })
+                                }
+                                placeholder="nmap, burpsuite, …"
+                            />
+                        </WriteupField>
+
+                        <WriteupField label="Catatan scope" className="md:col-span-2">
+                            <Textarea
+                                rows={2}
+                                value={value.environment.scope}
+                                onChange={(e) =>
+                                    set({
+                                        environment: {
+                                            ...value.environment,
+                                            scope: e.target.value,
+                                        },
+                                    })
+                                }
+                                placeholder="Batas pengujian, asumsi, eksklusi."
+                            />
+                        </WriteupField>
+                    </div>
+                </Section>
+            )}
+
+            {/* Optional detail: Hypotheses */}
+            {showSection('hypotheses') && (
+                <Section
+                    title="Hipotesis"
+                    description="Tebakan yang belum terbukti. Jangan mengubah hipotesis menjadi fakta tanpa bukti."
+                    count={value.hypotheses.length}
+                    idPrefix="hyp"
+                    defaultOpen={value.hypotheses.length > 0}
+                >
+                    {value.hypotheses.length === 0 && (
+                        <p className="text-xs text-muted">Belum ada hipotesis.</p>
+                    )}
+
+                    {value.hypotheses.map((h) => (
+                        <div
+                            key={h.id}
+                            className="flex flex-col sm:flex-row gap-3 rounded-md border border-edge bg-surface p-3"
+                        >
+                            <div className="w-full sm:w-40 shrink-0">
+                                <WriteupField label="Status">
+                                    <div className="flex items-center gap-2">
+                                        <Select
+                                            value={h.status}
+                                            onChange={(e) =>
+                                                updateHypothesis(h.id, {
+                                                    status: e.target.value as HypothesisItem['status'],
+                                                })
+                                            }
+                                        >
+                                            <option value="hypothesis">HYPOTHESIS</option>
+                                            <option value="verified">VERIFIED</option>
+                                            <option value="rejected">REJECTED</option>
+                                        </Select>
+                                        <StatusBadge
+                                            value={h.status}
+                                            tone={hypothesisStatusTone(h.status)}
+                                        />
+                                    </div>
+                                </WriteupField>
+                            </div>
+
+                            <Textarea
+                                rows={2}
+                                mono
+                                value={h.text}
+                                onChange={(e) =>
+                                    updateHypothesis(h.id, { text: e.target.value })
+                                }
+                                placeholder="Contoh: Parameter id mungkin rentan terhadap SQLi…"
+                            />
+
+                            <RemoveButton
+                                onClick={() => removeHypothesis(h.id)}
+                                label="Hapus hipotesis"
+                            />
+                        </div>
+                    ))}
+
+                    <AddButton onClick={addHypothesis} label="Tambah Hipotesis" />
+                </Section>
+            )}
+
+            {/* Optional detail: Steps */}
+            {showSection('steps') && (
+                <Section
+                    title="Langkah Analisis"
+                    description="Urutan investigasi jika analisis membutuhkan dokumentasi langkah yang lebih detail."
+                    count={value.steps.length}
+                    idPrefix="steps"
+                    defaultOpen={value.steps.length > 0}
+                >
+                    {value.steps.length === 0 && (
+                        <p className="text-xs text-muted">Belum ada langkah analisis.</p>
+                    )}
+
+                    {value.steps.map((step, i) => (
+                        <StepCard
+                            key={step.id}
+                            index={i}
+                            item={step}
+                            onChange={(patch) => updateStep(step.id, patch)}
+                            onRemove={() => removeStep(step.id)}
+                        />
+                    ))}
+
+                    <AddButton onClick={addStep} label="Tambah Langkah" />
+                </Section>
+            )}
+
+            {/* Optional detail: Failed attempts */}
+            {showSection('experiments') && (
+                <Section
+                    title="Failed Attempts / Percobaan"
+                    description="Catat percobaan, error, hasil aktual, dan perubahan pendekatan."
+                    count={value.experiments.length}
+                    idPrefix="exp"
+                    defaultOpen={value.experiments.length > 0}
+                >
+                    {value.experiments.length === 0 && (
+                        <p className="text-xs text-muted">
+                            Belum ada percobaan yang tercatat.
+                        </p>
+                    )}
+
+                    {value.experiments.map((exp, i) => (
+                        <ExperimentCard
+                            key={exp.id}
+                            index={i}
+                            item={exp}
+                            onChange={(patch) => updateExperiment(exp.id, patch)}
+                            onRemove={() => removeExperiment(exp.id)}
+                        />
+                    ))}
+
+                    <AddButton onClick={addExperiment} label="Tambah Percobaan" />
+                </Section>
+            )}
+
+            {/* Optional detail: Strategy */}
+            {showSection('strategyChanges') && (
+                <Section
+                    title="Perubahan Strategi"
+                    description="Catat kapan dan mengapa arah analisis berubah."
+                    count={value.strategyChanges.length}
+                    idPrefix="strat"
+                    defaultOpen={value.strategyChanges.length > 0}
+                >
+                    {value.strategyChanges.length === 0 && (
+                        <p className="text-xs text-muted">
+                            Belum ada perubahan strategi.
+                        </p>
+                    )}
+
+                    {value.strategyChanges.map((item) => (
+                        <TextListItem
+                            key={item.id}
+                            item={item}
+                            onChange={(text) =>
+                                updateTextItem('strategyChanges', item.id, text)
+                            }
+                            onRemove={() =>
+                                removeTextItem('strategyChanges', item.id)
+                            }
+                        />
+                    ))}
+
+                    <AddButton
+                        onClick={() => addTextItem('strategyChanges')}
+                        label="Tambah Perubahan Strategi"
                     />
-                ))}
-                <AddButton onClick={() => addTextItem('recommendations')} label="Tambah Rekomendasi" />
-            </Section>
+                </Section>
+            )}
 
-            {/* 10. Lesson Learned */}
-            <Section
-                title="10. Lesson Learned"
-                description="Refleksi: pola, kesalahan, konsep, dan relevansi untuk aktivitas berikutnya."
-                idPrefix="lesson"
-            >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <WriteupField label="Apa yang dipelajari">
-                        <Textarea rows={2} value={value.lessonLearned.learned} onChange={(e) => updateLesson('learned', e.target.value)} />
-                    </WriteupField>
-                    <WriteupField label="Pola yang ditemukan">
-                        <Textarea rows={2} value={value.lessonLearned.patterns} onChange={(e) => updateLesson('patterns', e.target.value)} />
-                    </WriteupField>
-                    <WriteupField label="Kesalahan yang harus dihindari">
-                        <Textarea rows={2} value={value.lessonLearned.mistakes} onChange={(e) => updateLesson('mistakes', e.target.value)} />
-                    </WriteupField>
-                    <WriteupField label="Konsep yang perlu dipahami ulang">
-                        <Textarea rows={2} value={value.lessonLearned.concepts} onChange={(e) => updateLesson('concepts', e.target.value)} />
-                    </WriteupField>
-                    <WriteupField label="Yang akan dilakukan berbeda">
-                        <Textarea rows={2} value={value.lessonLearned.different} onChange={(e) => updateLesson('different', e.target.value)} />
-                    </WriteupField>
-                    <WriteupField label="Relevansi di dunia nyata">
-                        <Textarea rows={2} value={value.lessonLearned.relevance} onChange={(e) => updateLesson('relevance', e.target.value)} />
-                    </WriteupField>
-                </div>
-            </Section>
+            {/* Optional detail: Risk / Impact */}
+            {showSection('riskImpact') && (
+                <Section
+                    title="Risk / Impact"
+                    description="Risiko dan dampak dari temuan atau hasil pengujian."
+                    idPrefix="risk"
+                    defaultOpen={value.riskImpact.trim() !== ''}
+                >
+                    <Textarea
+                        rows={4}
+                        value={value.riskImpact}
+                        onChange={(e) => set({ riskImpact: e.target.value })}
+                        placeholder="Dampak, risiko yang tersisa, atau batasan hasil pengujian."
+                    />
+                </Section>
+            )}
 
-            {/* 11. Referensi */}
-            <Section title="Referensi" description="Link/dokumen pendukung." idPrefix="refs">
-                <Textarea
-                    rows={3}
-                    value={value.references}
-                    onChange={(e) => set({ references: e.target.value })}
-                    placeholder="URL, CVE, advisory, ID corrected, …"
-                />
-            </Section>
+            {/* Optional detail: Recommendations */}
+            {showSection('recommendations') && (
+                <Section
+                    title="Recommendation"
+                    description="Langkah perbaikan atau tindak lanjut."
+                    count={value.recommendations.length}
+                    idPrefix="rec"
+                    defaultOpen={value.recommendations.length > 0}
+                >
+                    {value.recommendations.length === 0 && (
+                        <p className="text-xs text-muted">
+                            Belum ada rekomendasi.
+                        </p>
+                    )}
 
-            {/* 12. Catatan */}
-            <Section
-                title="Catatan (freeform Markdown)"
-                description="Dokumentasi bebas (Markdown). Hasil AI yang Anda Accept masuk ke sini dan tetap Anda review sebelum Save."
-                idPrefix="notes"
-            >
-                <Textarea
-                    rows={6}
-                    mono
-                    value={value.notes}
-                    onChange={(e) => set({ notes: e.target.value })}
-                    placeholder="Dokumentasi bebas…"
-                />
-            </Section>
+                    {value.recommendations.map((item) => (
+                        <TextListItem
+                            key={item.id}
+                            item={item}
+                            onChange={(text) =>
+                                updateTextItem('recommendations', item.id, text)
+                            }
+                            onRemove={() =>
+                                removeTextItem('recommendations', item.id)
+                            }
+                        />
+                    ))}
+
+                    <AddButton
+                        onClick={() => addTextItem('recommendations')}
+                        label="Tambah Recommendation"
+                    />
+                </Section>
+            )}
+
+            {/* Optional detail: Lesson learned */}
+            {showSection('lessonLearned') && (
+                <Section
+                    title="Lesson Learned"
+                    description="Refleksi tentang apa yang dipelajari dan apa yang akan dilakukan berbeda."
+                    idPrefix="lesson"
+                    defaultOpen={hasLessonLearned}
+                >
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <WriteupField label="Apa yang dipelajari">
+                            <Textarea
+                                rows={2}
+                                value={value.lessonLearned.learned}
+                                onChange={(e) =>
+                                    updateLesson('learned', e.target.value)
+                                }
+                            />
+                        </WriteupField>
+
+                        <WriteupField label="Pola yang ditemukan">
+                            <Textarea
+                                rows={2}
+                                value={value.lessonLearned.patterns}
+                                onChange={(e) =>
+                                    updateLesson('patterns', e.target.value)
+                                }
+                            />
+                        </WriteupField>
+
+                        <WriteupField label="Kesalahan yang harus dihindari">
+                            <Textarea
+                                rows={2}
+                                value={value.lessonLearned.mistakes}
+                                onChange={(e) =>
+                                    updateLesson('mistakes', e.target.value)
+                                }
+                            />
+                        </WriteupField>
+
+                        <WriteupField label="Konsep yang perlu dipahami ulang">
+                            <Textarea
+                                rows={2}
+                                value={value.lessonLearned.concepts}
+                                onChange={(e) =>
+                                    updateLesson('concepts', e.target.value)
+                                }
+                            />
+                        </WriteupField>
+
+                        <WriteupField label="Yang akan dilakukan berbeda">
+                            <Textarea
+                                rows={2}
+                                value={value.lessonLearned.different}
+                                onChange={(e) =>
+                                    updateLesson('different', e.target.value)
+                                }
+                            />
+                        </WriteupField>
+
+                        <WriteupField label="Relevansi di dunia nyata">
+                            <Textarea
+                                rows={2}
+                                value={value.lessonLearned.relevance}
+                                onChange={(e) =>
+                                    updateLesson('relevance', e.target.value)
+                                }
+                            />
+                        </WriteupField>
+                    </div>
+                </Section>
+            )}
+
+            {/* Optional detail: References */}
+            {showSection('references') && (
+                <Section
+                    title="Reference"
+                    description="Link atau dokumen pendukung."
+                    idPrefix="refs"
+                    defaultOpen={value.references.trim() !== ''}
+                >
+                    <Textarea
+                        rows={4}
+                        value={value.references}
+                        onChange={(e) => set({ references: e.target.value })}
+                        placeholder="URL, CVE, advisory, dokumentasi, dan referensi lainnya."
+                    />
+                </Section>
+            )}
         </div>
     );
 }

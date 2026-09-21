@@ -10,8 +10,6 @@ import AiAssistPanel from '@/Components/Writeup/AiAssistPanel';
 import { WriteupData, writeupFromRaw } from '@/Components/Writeup/types';
 import { Save, FolderOpen } from 'lucide-react';
 
-const AI_MARKER = 'AI suggestion / requires verification';
-
 export default function ChallengeEdit({ challenge }: { challenge: any }) {
     const { data, setData, post, processing, errors } = useForm({
         _method: 'put',
@@ -73,18 +71,10 @@ export default function ChallengeEdit({ challenge }: { challenge: any }) {
                     <FolderFields values={data} onChange={setField} original={challenge} />
                 </div>
 
-                {/* Panel AI — saran saja, Accept hanya mengisi notes (client state). */}
                 <AiAssistPanel
-                    challengeId={challenge.id}
-                    onAccept={(suggestion) => {
-                        const existing = data.writeup.notes.trim();
-                        const marker = `## ${AI_MARKER}`;
-                        const incoming =
-                            existing !== ''
-                                ? `${existing}\n\n${marker}\n\n${suggestion.markdown}`
-                                : `${marker}\n\n${suggestion.markdown}`;
-                        setData('writeup', { ...data.writeup, notes: incoming });
-                    }}
+                    title={data.judul}
+                    writeup={data.writeup}
+                    onApply={(next) => setData('writeup', next)}
                 />
 
                 <div>

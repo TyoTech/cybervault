@@ -6,7 +6,6 @@ import PageHeader from '@/Components/UI/PageHeader';
 import FolderFields from '@/Components/Challenges/FolderFields';
 import AttachmentField from '@/Components/Challenges/AttachmentField';
 import WriteupEditor from '@/Components/Writeup/WriteupEditor';
-import AiAssistPanel from '@/Components/Writeup/AiAssistPanel';
 import { emptyWriteup, WriteupData } from '@/Components/Writeup/types';
 import { Save } from 'lucide-react';
 
@@ -62,12 +61,6 @@ export default function ChallengeCreate() {
                 <div className="rounded-lg border border-edge bg-surface p-5">
                     <FolderFields values={data} onChange={setField} />
                 </div>
-
-                <AiAssistPanel
-                    title={data.judul}
-                    writeup={data.writeup}
-                    onApply={(next) => setData('writeup', next)}
-                />
 
                 <div>
                     <div className="mb-3 flex items-center justify-between">

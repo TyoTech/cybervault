@@ -13,7 +13,7 @@ export default function UpdateProfileInformation({ mustVerifyEmail, status }: { 
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        patch(route('profile.update'));
+        patch(route('settings.profile.update'));
     };
 
     return (

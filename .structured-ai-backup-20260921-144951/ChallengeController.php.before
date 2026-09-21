@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Challenge;
 use App\Services\ChallengeWriteupService;
 use App\Services\WriteupAiAssistService;
-use App\Services\StructuredWriteupAiAssistService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -185,50 +184,6 @@ class ChallengeController extends Controller
      *   penulisan database/file di sini. Penyimpanan tetap lewat challenges.update.
      * - ownership check + throttle route (5/menit).
      */
-
-    /**
-     * Structured AI Assist untuk Create/Edit Writeup.
-     *
-     * Read-only: menerima draft dari client, meminta Ollama menyusunnya,
-     * lalu mengembalikan preview. Tidak membaca/menulis challenge storage.
-     */
-    public function assistStructured(
-        Request $request,
-        StructuredWriteupAiAssistService $ai
-    ) {
-        $validated = $request->validate([
-            'title' => 'nullable|string|max:255',
-            'writeup' => 'required|array',
-        ]);
-
-        try {
-            $result = $ai->structure(
-                (string) ($validated['title'] ?? ''),
-                $validated['writeup']
-            );
-
-            return response()->json([
-                'writeup' => $result->writeup,
-                'warnings' => $result->warnings,
-            ]);
-        } catch (\Throwable $e) {
-            \Log::error('Structured AI controller failed', [
-                'class' => get_class($e),
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-
-            return response()->json([
-                'message' => 'AI tidak dapat memproses writeup saat ini.',
-                'debug' => app()->environment('local')
-                    ? $e->getMessage()
-                    : null,
-            ], 502);
-        }
-    }
-
     public function assist(Request $request, Challenge $challenge, WriteupAiAssistService $ai)
     {
         if ($challenge->user_id !== $request->user()->id) abort(403);

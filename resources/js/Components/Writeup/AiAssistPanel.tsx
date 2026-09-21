@@ -1,172 +1,180 @@
 import { useState } from 'react';
 import axios from 'axios';
-import { Check, Sparkles, X, Loader2 } from 'lucide-react';
 import Button from '@/Components/UI/Button';
-import { markdownToSafeHtml } from '@/Utils/markdownToSafeHtml';
-import { improveErrorMessage } from '@/Utils/aiImproveError';
+import { writeupFromRaw, WriteupData } from '@/Components/Writeup/types';
+import { Sparkles, Check, X, Loader2, AlertTriangle } from 'lucide-react';
 
-export interface AiAssistSuggestion {
+interface Props {
     title: string;
-    markdown: string;
-    suggestions: Array<{ category: string; text: string }>;
-    note: string;
+    writeup: WriteupData;
+    onApply: (next: WriteupData) => void;
 }
 
-const CATEGORY_LABEL: Record<string, string> = {
-    clarity: 'Kejelasan',
-    structure: 'Struktur',
-    fact_vs_hypothesis: 'Fact vs Hypothesis',
-    evidence: 'Bukti',
-    missing_reasoning: 'Reasoning yang hilang',
-    lesson_learned: 'Lesson Learned',
-    other: 'Lainnya',
+const labels: Record<string, string> = {
+    'goal.problem': 'Masalah',
+    'goal.objective': 'Tujuan',
+    'goal.proof': 'Yang ingin dibuktikan',
+    'environment.target': 'Target / Scope',
+    'environment.environment': 'Environment',
+    'environment.host': 'IP / Hostname',
+    'environment.application': 'Aplikasi',
+    'environment.os': 'OS',
+    'environment.tools': 'Tools',
+    'environment.scope': 'Catatan Scope',
+    hypotheses: 'Hipotesis',
+    steps: 'Langkah Analisis',
+    experiments: 'Percobaan / Failed Attempts',
+    evidence: 'Evidence',
+    strategyChanges: 'Strategy Changes',
+    riskImpact: 'Risk / Impact',
+    recommendations: 'Rekomendasi',
+    lessonLearned: 'Lesson Learned',
+    references: 'Referensi',
+    notes: 'Analysis / Catatan',
 };
 
-interface AiAssistPanelProps {
-    challengeId: string;
-    onAccept: (suggestion: AiAssistSuggestion) => void;
+function isMeaningful(value: unknown): boolean {
+    if (typeof value === 'string') return value.trim() !== '';
+    if (Array.isArray(value)) return value.length > 0;
+    if (value && typeof value === 'object') {
+        return Object.values(value).some(isMeaningful);
+    }
+    return false;
 }
 
-/**
- * Panel "AI Assist" untuk Writeup (Phase 10).
- *
- * - Memanggil POST /challenges/{challenge}/ai/assist (ownership + throttle di backend).
- * - READ-ONLY: AI hanya memberi SARAN. Accept hanya mengisi field `notes`
- *   (client state). Penyimpanan permanen tetap lewat tombol Save/Update di page.
- * - Preview di-render dari Markdown -> HTML yang DISANITASI (DOMPurify) karena
- *   output AI diperlakukan sebagai untrusted content.
- */
-export default function AiAssistPanel({ challengeId, onAccept }: AiAssistPanelProps) {
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [suggestion, setSuggestion] = useState<AiAssistSuggestion | null>(null);
+function summarize(writeup: WriteupData): string[] {
+    const paths: string[] = [];
 
-    const runAssist = async () => {
-        if (loading) return;
+    const visit = (value: unknown, path: string) => {
+        if (typeof value === 'string') {
+            if (value.trim()) paths.push(path);
+            return;
+        }
+        if (Array.isArray(value)) {
+            if (value.length) paths.push(path);
+            return;
+        }
+        if (value && typeof value === 'object') {
+            Object.entries(value).forEach(([key, child]) => {
+                visit(child, path ? `${path}.${key}` : key);
+            });
+        }
+    };
+
+    visit(writeup, '');
+    return [...new Set(paths.filter(Boolean))];
+}
+
+export default function AiAssistPanel({ title, writeup, onApply }: Props) {
+    const [loading, setLoading] = useState(false);
+    const [preview, setPreview] = useState<WriteupData | null>(null);
+    const [warnings, setWarnings] = useState<string[]>([]);
+    const [error, setError] = useState('');
+
+    const run = async () => {
         setLoading(true);
-        setError(null);
+        setError('');
+        setPreview(null);
+        setWarnings([]);
 
         try {
-            const { data } = await axios.post(route('challenges.ai.assist', challengeId));
-            setSuggestion(data.data as AiAssistSuggestion);
-        } catch (e) {
-            setError(improveErrorMessage(e));
+            const response = await axios.post(route('challenges.ai.assist'), {
+                title,
+                writeup,
+            });
+
+            const next = writeupFromRaw(response.data?.writeup);
+            setPreview(next);
+            setWarnings(Array.isArray(response.data?.warnings) ? response.data.warnings : []);
+        } catch (e: any) {
+            console.error('[AI ASSIST ERROR]', e);
+
+            const message =
+                e?.response?.data?.message ||
+                e?.response?.data?.error ||
+                e?.message ||
+                'AI tidak dapat memproses writeup saat ini.';
+
+            setError(message);
         } finally {
             setLoading(false);
         }
     };
 
-    const reject = () => {
-        setSuggestion(null);
-        setError(null);
+    const apply = () => {
+        if (!preview) return;
+        onApply(preview);
+        setPreview(null);
+        setWarnings([]);
+        setError('');
     };
 
-    const accept = () => {
-        if (!suggestion) return;
-        onAccept(suggestion);
-        setSuggestion(null);
-    };
+    const previewPaths = preview ? summarize(preview) : [];
 
     return (
-        <div className="space-y-3">
-            <div className="flex items-start gap-3">
-                <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    onClick={runAssist}
-                    disabled={loading}
-                >
-                    {loading ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                        <Sparkles className="w-4 h-4" />
-                    )}
-                    {loading ? 'Memproses dengan AI lokal…' : 'Analisis dengan AI'}
+        <section className="rounded-lg border border-edge bg-surface p-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <div className="flex items-center gap-2">
+                        <Sparkles className="h-4 w-4 text-accent" />
+                        <h2 className="text-sm font-medium text-strong">AI Writeup Assistant</h2>
+                    </div>
+                    <p className="mt-1 text-xs text-faint">
+                        Strukturkan catatan kasar ke field Writeup. AI tidak menyimpan otomatis.
+                    </p>
+                </div>
+
+                <Button type="button" variant="secondary" size="sm" onClick={run} disabled={loading}>
+                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                    {loading ? 'Memproses…' : 'Isi dengan AI'}
                 </Button>
-                <p className="text-xs text-faint leading-relaxed pt-1">
-                    AI menyusun saran struktur & kejelasan. Hasil tetap di-review oleh Anda —
-                    AI tidak menyimpan apa pun ke disk.
-                </p>
             </div>
 
             {error && (
-                <div className="flex items-start justify-between gap-3 rounded-md border border-danger/30 bg-danger/10 px-4 py-3">
-                    <p className="text-sm text-danger">{error}</p>
-                    <button
-                        type="button"
-                        onClick={() => setError(null)}
-                        className="text-danger hover:text-danger"
-                        aria-label="Tutup pesan error"
-                    >
-                        <X className="w-4 h-4" />
-                    </button>
+                <div className="mt-3 rounded-md border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">
+                    {error}
                 </div>
             )}
 
-            {suggestion && (
-                <div className="rounded-md border border-accent/30 bg-surface p-4 space-y-4">
-                    <div className="flex items-center justify-between">
-                        <h3 className="text-sm font-semibold text-accent flex items-center gap-2">
-                            <Sparkles className="w-4 h-4" /> AI Suggestion
-                        </h3>
-                        <span className="text-xs text-faint">Review sebelum dipakai</span>
-                    </div>
-
-                    {suggestion.title && (
+            {preview && (
+                <div className="mt-4 space-y-3 border-t border-edge pt-4">
+                    <div className="flex items-center justify-between gap-3">
                         <div>
-                            <p className="text-xs uppercase tracking-wide text-faint mb-1">Judul usulan</p>
-                            <p className="text-sm text-strong">{suggestion.title}</p>
+                            <p className="text-sm font-medium text-strong">Preview hasil AI</p>
+                            <p className="text-xs text-faint">
+                                {previewPaths.length} bagian terisi. Belum disimpan ke writeup.json.
+                            </p>
                         </div>
-                    )}
-
-                    <div>
-                        <p className="text-xs uppercase tracking-wide text-faint mb-1">
-                            Isi yang disarankan
-                        </p>
-                        {suggestion.note && (
-                            <p className="text-[11px] text-warning/90 mb-2">⚠ {suggestion.note}</p>
-                        )}
-                        {/* Output AI = untrusted: sanitasi DOMPurify sebelum render preview. */}
-                        <div
-                            className="text-sm text-strong leading-relaxed space-y-2"
-                            // eslint-disable-next-line react/no-danger
-                            dangerouslySetInnerHTML={{ __html: markdownToSafeHtml(suggestion.markdown) }}
-                        />
-                    </div>
-
-                    {suggestion.suggestions.length > 0 && (
-                        <div>
-                            <p className="text-xs uppercase tracking-wide text-faint mb-1">Saran</p>
-                            <ul className="space-y-1.5">
-                                {suggestion.suggestions.map((s, i) => (
-                                    <li key={i} className="text-sm text-body flex items-start gap-2">
-                                        <span className="shrink-0 rounded border border-edge bg-elevated/60 px-1.5 py-0.5 font-mono text-[10px] uppercase text-muted mt-0.5">
-                                            {CATEGORY_LABEL[s.category] ?? s.category}
-                                        </span>
-                                        <span>{s.text}</span>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
-
-                    <div className="flex items-center justify-between gap-2 pt-2 border-t border-edge">
-                        <p className="text-xs text-faint">
-                            Accept hanya mengisi field <span className="text-body">Catatan</span>.
-                            Tekan <span className="text-body">Save</span> untuk menyimpan ke disk.
-                        </p>
-                        <div className="flex gap-2 shrink-0">
-                            <Button type="button" variant="ghost" size="sm" onClick={reject}>
-                                <X className="w-4 h-4" /> Reject
+                        <div className="flex gap-2">
+                            <Button type="button" variant="ghost" size="sm" onClick={() => setPreview(null)}>
+                                <X className="h-4 w-4" /> Batal
                             </Button>
-                            <Button type="button" variant="primary" size="sm" onClick={accept}>
-                                <Check className="w-4 h-4" /> Accept
+                            <Button type="button" size="sm" onClick={apply}>
+                                <Check className="h-4 w-4" /> Terapkan
                             </Button>
                         </div>
                     </div>
+
+                    <div className="flex flex-wrap gap-2">
+                        {previewPaths.map((path) => (
+                            <span key={path} className="rounded-md border border-edge px-2 py-1 text-xs text-muted">
+                                {labels[path] ?? path}
+                            </span>
+                        ))}
+                    </div>
+
+                    {warnings.length > 0 && (
+                        <div className="space-y-1 rounded-md border border-warning/30 bg-warning/10 px-3 py-2">
+                            {warnings.map((warning) => (
+                                <div key={warning} className="flex gap-2 text-xs text-muted">
+                                    <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                                    <span>{warning}</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             )}
-        </div>
+        </section>
     );
 }

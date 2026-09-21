@@ -61,8 +61,7 @@ return [
         ],
 
         'cyber' => [
-            'driver' => 'local',
-            'root' => env('CYBER_DISK_ROOT') ?: storage_path('app/cyber'),
+            'driver' => 'cyber',
             'throw' => false,
         ],
 

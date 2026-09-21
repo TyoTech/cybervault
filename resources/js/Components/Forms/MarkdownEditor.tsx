@@ -87,25 +87,25 @@ export default function MarkdownEditor({ value, onChange, className = '' }: Mark
     };
 
     return (
-        <div className={`relative flex flex-col border border-white/10 rounded-lg overflow-hidden bg-zinc-950 ${className}`}>
+        <div className={`relative flex flex-col border border-edge rounded-lg overflow-hidden bg-canvas ${className}`}>
             {isUploading && (
-                <div className="absolute top-2 right-2 flex items-center text-blue-400 bg-blue-500/10 px-3 py-1 rounded-full text-xs font-medium border border-blue-500/20 backdrop-blur-sm z-10">
+                <div className="absolute top-2 right-2 flex items-center text-accent bg-accent/10 px-3 py-1 rounded-full text-xs font-medium border border-accent/20 backdrop-blur-sm z-10">
                     <Loader2 className="w-3 h-3 mr-2 animate-spin" /> Mengunggah...
                 </div>
             )}
 
-            <div className="flex bg-zinc-900 border-b border-white/10 px-2 py-1">
+            <div className="flex bg-surface border-b border-edge px-2 py-1">
                 <button
                     type="button"
                     onClick={() => setMode('write')}
-                    className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${mode === 'write' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-400 hover:text-zinc-200'}`}
+                    className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${mode === 'write' ? 'bg-elevated text-strong' : 'text-muted hover:text-strong'}`}
                 >
                     Write
                 </button>
                 <button
                     type="button"
                     onClick={() => setMode('preview')}
-                    className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${mode === 'preview' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-400 hover:text-zinc-200'}`}
+                    className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${mode === 'preview' ? 'bg-elevated text-strong' : 'text-muted hover:text-strong'}`}
                 >
                     Preview
                 </button>
@@ -120,22 +120,22 @@ export default function MarkdownEditor({ value, onChange, className = '' }: Mark
                         onDragOver={handleDragOver}
                         onDrop={handleDrop}
                         onPaste={handlePaste}
-                        className="w-full min-h-[400px] bg-transparent text-zinc-100 font-mono p-4 border-none focus:ring-0 resize-y outline-none leading-relaxed text-sm"
+                        className="w-full min-h-[400px] bg-transparent text-strong font-mono p-4 border-none focus:ring-0 resize-y outline-none leading-relaxed text-sm"
                         placeholder="Ketik catatan di sini... (Mendukung Markdown). Drag & Drop atau Paste gambar langsung ke area ini."
                         required
                     />
                 ) : (
-                    <div className="p-4 min-h-[400px] overflow-y-auto bg-zinc-950/50">
+                    <div className="p-4 min-h-[400px] overflow-y-auto">
                         {value ? (
                             <MarkdownViewer content={value} />
                         ) : (
-                            <p className="text-zinc-500 text-sm">Tidak ada yang bisa dipratinjau.</p>
+                            <p className="text-faint text-sm">Tidak ada yang bisa dipratinjau.</p>
                         )}
                     </div>
                 )}
             </div>
 
-            <div className="flex items-center justify-between px-4 py-2 text-xs text-zinc-500 bg-zinc-900/50 border-t border-white/5">
+            <div className="flex items-center justify-between px-4 py-2 text-xs text-faint bg-surface border-t border-edge">
                 <span className="flex items-center"><ImageIcon className="w-3 h-3 mr-1"/> Mendukung Drag & Drop / Paste Gambar</span>
                 <span>Pro Tip: Gunakan **Tebal**, `Kode`, atau ``` untuk block code.</span>
             </div>

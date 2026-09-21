@@ -256,6 +256,7 @@ Saat mengirim file tertentu muncul HTTP 422, kemudian saya cek kembali field req
                                         <option value="response">RESP</option>
                                         <option value="error">ERROR</option>
                                         <option value="log">LOG</option>
+                                        <option value="lainya">LAINYA</option>
                                     </Select>
                                     <StatusBadge
                                         value={ev.kind}

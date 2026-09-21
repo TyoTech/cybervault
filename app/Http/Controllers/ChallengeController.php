@@ -144,19 +144,19 @@ class ChallengeController extends Controller
 
     public function openFolder(Request $request, Challenge $challenge)
     {
-        abort_if($challenge->user_id !== $request->user()->id, 403);
+        if ($challenge->user_id !== $request->user()->id) {
+            abort(403);
+        }
 
-        $fullPath = config('filesystems.disks.cyber.root')
-            . DIRECTORY_SEPARATOR
-            . $challenge->path_folder;
+        $fullPath = Storage::disk('cyber')->path($challenge->path_folder);
 
         if (!is_dir($fullPath)) {
-            return back()->with('error', 'Folder tidak ditemukan.');
+            abort(404, 'Folder challenge tidak ditemukan.');
         }
 
         exec('xdg-open ' . escapeshellarg($fullPath) . ' > /dev/null 2>&1 &');
 
-        return back()->with('success', 'Folder berhasil dibuka.');
+        return back();
     }
 
     public function deleteFile(Request $request, Challenge $challenge)

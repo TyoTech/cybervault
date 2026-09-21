@@ -3,7 +3,9 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, Link, router } from '@inertiajs/react';
 import Input from '@/Components/UI/Input';
 import Button from '@/Components/UI/Button';
-import { ArrowLeft, Save, FolderOpen } from 'lucide-react';
+import PageHeader from '@/Components/UI/PageHeader';
+import { Save, FolderOpen } from 'lucide-react';
+import { sanitizeNoteHtml } from '@/Utils/sanitizeHtml';
 import ReactQuill, { Quill } from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 // @ts-ignore
@@ -22,23 +24,24 @@ if (typeof window !== 'undefined') {
 
 const modules = {
     toolbar: [
-        [{ 'header': [1, 2, 3, false] }],
+        [{ header: [1, 2, 3, false] }],
         ['bold', 'italic', 'underline', 'strike', 'blockquote'],
-        [{'list': 'ordered'}, {'list': 'bullet'}],
+        [{ list: 'ordered' }, { list: 'bullet' }],
         ['link', 'image'],
-        ['clean']
+        ['clean'],
     ],
     imageResize: {
         parchment: Quill.import('parchment'),
-        modules: ['Resize', 'DisplaySize']
-    }
+        modules: ['Resize', 'DisplaySize'],
+    },
 };
 
 export default function NoteEdit({ note }: { note: any }) {
     const { data, setData, post, processing } = useForm({
         _method: 'put',
         title: note.title,
-        content: note.content || '',
+        // Sanitasi HTML sebelum dimuat ke editor Quill (defense-in-depth).
+        content: sanitizeNoteHtml(note.content || ''),
     });
 
     const submit: FormEventHandler = (e) => {
@@ -51,28 +54,59 @@ export default function NoteEdit({ note }: { note: any }) {
             <Head title={`Edit - ${note.title}`} />
 
             <div className="max-w-4xl">
-                <div className="flex justify-between items-center mb-6">
-                    <Link href={route('notes.show', note.id)} className="inline-flex items-center text-sm text-zinc-400 hover:text-zinc-200">
-                        <ArrowLeft className="w-4 h-4 mr-2" /> Batal
-                    </Link>
-                    <Button type="button" variant="secondary" onClick={() => router.post(route('notes.openFolder', note.id))}>
-                        <FolderOpen className="w-4 h-4 mr-2" /> Buka Folder Lokal
-                    </Button>
-                </div>
+                <PageHeader
+                    title="Edit Catatan"
+                    description="Perbarui judul atau konten catatan."
+                    actions={
+                        <>
+                            <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => router.post(route('notes.openFolder', note.id))}
+                            >
+                                <FolderOpen className="h-4 w-4" /> Buka Folder
+                            </Button>
+                            <Link href={route('notes.show', note.id)}>
+                                <Button variant="ghost" size="sm">Batal</Button>
+                            </Link>
+                        </>
+                    }
+                />
 
-                <form onSubmit={submit} className="space-y-6">
+                <form onSubmit={submit} className="space-y-5">
                     <div>
-                        <label className="block text-sm font-medium text-zinc-300 mb-1.5">Judul Catatan</label>
-                        <Input value={data.title} onChange={(e) => setData('title', e.target.value)} required />
+                        <label htmlFor="title" className="mb-1.5 block text-sm font-medium text-body">
+                            Judul
+                        </label>
+                        <Input
+                            id="title"
+                            value={data.title}
+                            onChange={(e) => setData('title', e.target.value)}
+                            required
+                        />
                     </div>
 
-                    <div className="bg-white text-black rounded-lg overflow-hidden pb-12">
-                        <ReactQuill theme="snow" value={data.content} onChange={(val) => setData('content', val)} className="h-64" modules={modules} />
+                    <div>
+                        <label htmlFor="content" className="mb-1.5 block text-sm font-medium text-body">
+                            Konten
+                        </label>
+                        <div className="overflow-hidden rounded-lg border border-edge bg-surface">
+                            <ReactQuill
+                                theme="snow"
+                                value={data.content}
+                                onChange={(val) => setData('content', val)}
+                                modules={modules}
+                            />
+                        </div>
                     </div>
 
-                    <div className="flex justify-end pt-4 border-t border-white/10">
+                    <div className="flex items-center justify-end gap-2 border-t border-edge pt-5">
+                        <Link href={route('notes.show', note.id)}>
+                            <Button type="button" variant="ghost">Batal</Button>
+                        </Link>
                         <Button type="submit" disabled={processing}>
-                            <Save className="w-4 h-4 mr-2" /> Update (.docx)
+                            <Save className="h-4 w-4" />
+                            {processing ? 'Menyimpan...' : 'Simpan Perubahan'}
                         </Button>
                     </div>
                 </form>

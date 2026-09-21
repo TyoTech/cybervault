@@ -4,8 +4,15 @@ import './bootstrap';
 import { createInertiaApp } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
+import { Ziggy } from './ziggy';
+import { route } from 'ziggy-js';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+
+// Ziggy di-load dari file generated (resources/js/ziggy.js) alih-alih inline script @routes,
+// sehingga CSP production bisa tanpa 'unsafe-inline'/'unsafe-eval'.
+window.Ziggy = Ziggy;
+window.route = route;
 
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,

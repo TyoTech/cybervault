@@ -1,39 +1,44 @@
 import { Head, Link } from '@inertiajs/react';
+import { Shield } from 'lucide-react';
 
 export default function Welcome({ auth }: { auth: any }) {
     return (
         <>
-            <Head title="Welcome" />
-            <div className="min-h-screen bg-gray-950 text-gray-300 flex flex-col items-center justify-center selection:bg-blue-500 selection:text-white">
-                <div className="max-w-3xl w-full p-6 text-center">
-                    <h1 className="text-5xl font-bold text-white tracking-tight mb-4">
-                        CyberVault
+            <Head title="Cyber Vault" />
+            <div className="flex min-h-screen flex-col items-center justify-center bg-canvas px-4">
+                <div className="flex w-full max-w-md flex-col items-center">
+                    <span className="flex h-12 w-12 items-center justify-center rounded-lg border border-edge bg-surface">
+                        <Shield className="h-6 w-6 text-accent" aria-hidden="true" />
+                    </span>
+                    <h1 className="mt-5 text-2xl font-semibold tracking-tight text-strong">
+                        Cyber Vault
                     </h1>
-                    <p className="text-lg text-gray-400 mb-8">
-                        Sistem pencatatan dan pembuatan writeup untuk keamanan siber. Buat catatan, simpan writeup, dan tingkatkan keterampilan keamanan siber Anda dengan mudah.
+                    <p className="mt-2 text-center text-sm leading-relaxed text-faint">
+                        Workspace pribadi untuk dokumentasi keamanan siber: catatan teknis,
+                        writeup challenge, payload, dan command yang bisa dipakai ulang.
                     </p>
 
-                    <div className="flex justify-center gap-4">
+                    <div className="mt-7 flex items-center gap-3">
                         {auth.user ? (
                             <Link
                                 href={route('dashboard')}
-                                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                                className="inline-flex h-9 items-center justify-center rounded-md bg-accent px-4 text-sm font-medium text-white transition-colors hover:bg-accent-hover"
                             >
-                                Dashboard
+                                Buka Dashboard
                             </Link>
                         ) : (
                             <>
                                 <Link
                                     href={route('login')}
-                                    className="px-6 py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors border border-gray-700"
+                                    className="inline-flex h-9 items-center justify-center rounded-md border border-edge bg-surface px-4 text-sm font-medium text-strong transition-colors hover:bg-elevated hover:text-strong"
                                 >
-                                    Log in
+                                    Masuk
                                 </Link>
                                 <Link
                                     href={route('register')}
-                                    className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors shadow-lg shadow-blue-500/20"
+                                    className="inline-flex h-9 items-center justify-center rounded-md bg-accent px-4 text-sm font-medium text-white transition-colors hover:bg-accent-hover"
                                 >
-                                    Register
+                                    Daftar
                                 </Link>
                             </>
                         )}

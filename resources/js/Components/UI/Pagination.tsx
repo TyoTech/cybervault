@@ -1,30 +1,32 @@
 import { Link } from '@inertiajs/react';
 
 export default function Pagination({ links }: { links: any[] }) {
-    if (links.length <= 3) return null; // Sembunyikan jika hanya 1 halaman
+    if (!links || links.length <= 3) return null; // Sembunyikan jika hanya 1 halaman
 
     return (
-        <div className="flex flex-wrap justify-center gap-1 mt-8">
-            {links.map((link, key) => (
+        <nav className="mt-6 flex flex-wrap items-center gap-1" aria-label="Navigasi halaman">
+            {links.map((link, key) =>
                 link.url === null ? (
-                    <div
+                    <span
                         key={key}
-                        className="px-4 py-2 text-sm text-zinc-500 bg-zinc-900/50 border border-white/5 rounded-md cursor-not-allowed"
+                        aria-disabled="true"
+                        className="pointer-events-none rounded-md border border-edge px-3 py-1.5 text-sm text-muted"
                         dangerouslySetInnerHTML={{ __html: link.label }}
                     />
                 ) : (
                     <Link
                         key={key}
                         href={link.url}
-                        className={`px-4 py-2 text-sm rounded-md border transition-colors ${
+                        aria-current={link.active ? 'page' : undefined}
+                        className={`rounded-md border px-3 py-1.5 text-sm transition-colors ${
                             link.active
-                                ? 'bg-blue-500/10 text-blue-400 border-blue-500/20 font-medium'
-                                : 'text-zinc-400 bg-zinc-900/50 border-white/5 hover:bg-zinc-800'
+                                ? 'border-accent/40 bg-accent/10 font-medium text-accent'
+                                : 'border-edge bg-surface text-muted hover:bg-elevated hover:text-strong'
                         }`}
                         dangerouslySetInnerHTML={{ __html: link.label }}
                     />
                 )
-            ))}
-        </div>
+            )}
+        </nav>
     );
 }

@@ -34,38 +34,38 @@ export default function UpdatePasswordForm() {
 
     return (
         <section>
-            <header className="mb-6 border-b border-white/10 pb-4">
-                <h2 className="text-lg font-semibold text-zinc-100 flex items-center gap-2">
-                    <Lock className="w-5 h-5 text-orange-500" />
+            <header className="mb-6 border-b border-edge pb-4">
+                <h2 className="text-lg font-semibold text-strong flex items-center gap-2">
+                    <Lock className="w-5 h-5 text-warning" />
                     Perbarui Kata Sandi
                 </h2>
-                <p className="mt-1 text-sm text-zinc-400">Gunakan kata sandi acak dan panjang untuk keamanan maksimal.</p>
+                <p className="mt-1 text-sm text-muted">Gunakan kata sandi acak dan panjang untuk keamanan maksimal.</p>
             </header>
 
             <form onSubmit={updatePassword} className="space-y-6 max-w-2xl">
                 <div>
-                    <label className="block text-sm font-medium text-zinc-300 mb-1.5">Kata Sandi Saat Ini</label>
+                    <label className="block text-sm font-medium text-body mb-1.5">Kata Sandi Saat Ini</label>
                     <Input ref={currentPasswordInput} type="password" value={data.current_password} onChange={(e) => setData('current_password', e.target.value)} required />
-                    {errors.current_password && <p className="text-red-500 text-xs mt-1">{errors.current_password}</p>}
+                    {errors.current_password && <p className="text-danger text-xs mt-1">{errors.current_password}</p>}
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-zinc-300 mb-1.5">Kata Sandi Baru</label>
+                    <label className="block text-sm font-medium text-body mb-1.5">Kata Sandi Baru</label>
                     <Input ref={passwordInput} type="password" value={data.password} onChange={(e) => setData('password', e.target.value)} required />
-                    {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
+                    {errors.password && <p className="text-danger text-xs mt-1">{errors.password}</p>}
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-zinc-300 mb-1.5">Konfirmasi Kata Sandi Baru</label>
+                    <label className="block text-sm font-medium text-body mb-1.5">Konfirmasi Kata Sandi Baru</label>
                     <Input type="password" value={data.password_confirmation} onChange={(e) => setData('password_confirmation', e.target.value)} required />
-                    {errors.password_confirmation && <p className="text-red-500 text-xs mt-1">{errors.password_confirmation}</p>}
+                    {errors.password_confirmation && <p className="text-danger text-xs mt-1">{errors.password_confirmation}</p>}
                 </div>
 
                 <div className="flex items-center gap-4 pt-4">
                     <Button type="submit" disabled={processing}>
                         <Save className="w-4 h-4 mr-2" /> Ganti Sandi
                     </Button>
-                    {recentlySuccessful && <p className="text-sm text-emerald-400 transition ease-in-out">Tersimpan.</p>}
+                    {recentlySuccessful && <p className="text-sm text-success transition ease-in-out">Tersimpan.</p>}
                 </div>
             </form>
         </section>

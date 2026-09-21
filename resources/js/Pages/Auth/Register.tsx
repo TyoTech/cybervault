@@ -29,14 +29,14 @@ export default function Register() {
             <Head title="Daftar" />
 
             <Card>
-                <CardHeader className="text-center pb-2">
-                    <CardTitle className="text-2xl">Inisialisasi Vault</CardTitle>
-                    <p className="text-sm text-zinc-500 mt-2">Buat workspace keamanan pribadi Anda</p>
+                <CardHeader className="pb-2">
+                    <CardTitle>Daftar</CardTitle>
+                    <p className="text-sm text-faint mt-1">Buat workspace keamanan pribadi Anda.</p>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={submit} className="space-y-4 mt-4">
                         <div>
-                            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Nama Lengkap</label>
+                            <label className="block text-sm font-medium text-body mb-1.5">Nama Lengkap</label>
                             <Input
                                 id="name"
                                 name="name"
@@ -45,11 +45,11 @@ export default function Register() {
                                 onChange={(e) => setData('name', e.target.value)}
                                 required
                             />
-                            {errors.name && <p className="text-red-500 text-xs mt-1.5">{errors.name}</p>}
+                            {errors.name && <p className="text-danger text-xs mt-1.5">{errors.name}</p>}
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Email</label>
+                            <label className="block text-sm font-medium text-body mb-1.5">Email</label>
                             <Input
                                 id="email"
                                 type="email"
@@ -59,11 +59,11 @@ export default function Register() {
                                 onChange={(e) => setData('email', e.target.value)}
                                 required
                             />
-                            {errors.email && <p className="text-red-500 text-xs mt-1.5">{errors.email}</p>}
+                            {errors.email && <p className="text-danger text-xs mt-1.5">{errors.email}</p>}
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Password</label>
+                            <label className="block text-sm font-medium text-body mb-1.5">Password</label>
                             <Input
                                 id="password"
                                 type="password"
@@ -73,11 +73,11 @@ export default function Register() {
                                 onChange={(e) => setData('password', e.target.value)}
                                 required
                             />
-                            {errors.password && <p className="text-red-500 text-xs mt-1.5">{errors.password}</p>}
+                            {errors.password && <p className="text-danger text-xs mt-1.5">{errors.password}</p>}
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Konfirmasi Password</label>
+                            <label className="block text-sm font-medium text-body mb-1.5">Konfirmasi Password</label>
                             <Input
                                 id="password_confirmation"
                                 type="password"
@@ -87,16 +87,16 @@ export default function Register() {
                                 onChange={(e) => setData('password_confirmation', e.target.value)}
                                 required
                             />
-                            {errors.password_confirmation && <p className="text-red-500 text-xs mt-1.5">{errors.password_confirmation}</p>}
+                            {errors.password_confirmation && <p className="text-danger text-xs mt-1.5">{errors.password_confirmation}</p>}
                         </div>
 
                         <Button className="w-full mt-6" disabled={processing}>
                             {processing ? 'Menyimpan...' : 'Buat Vault'}
                         </Button>
 
-                        <div className="text-center mt-6 text-sm text-zinc-500">
+                        <div className="text-center mt-6 text-sm text-faint">
                             Sudah memiliki vault?{' '}
-                            <Link href={route('login')} className="text-blue-500 hover:text-blue-400 font-medium transition-colors">
+                            <Link href={route('login')} className="text-accent hover:text-accent font-medium transition-colors">
                                 Masuk di sini
                             </Link>
                         </div>

@@ -62,7 +62,7 @@ return [
 
         'cyber' => [
             'driver' => 'local',
-            'root' => '/home/tyo/cyber',
+            'root' => env('CYBER_DISK_ROOT') ?: storage_path('app/cyber'),
             'throw' => false,
         ],
 

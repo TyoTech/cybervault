@@ -44,6 +44,14 @@ Route::middleware('auth')->group(function () {
     Route::post('/challenges/{challenge}/open-folder', [App\Http\Controllers\ChallengeController::class, 'openFolder'])->name('challenges.openFolder');
     Route::delete('/challenges/{challenge}/delete-file', [App\Http\Controllers\ChallengeController::class, 'deleteFile'])->name('challenges.deleteFile');
 
+    // Route AI "Assist Writeup" (Phase 10):
+    // - auth group + ownership check di controller;
+    // - throttle 5/menit (request AI mahal, model lokal tetap butuh resource);
+    // - READ-ONLY terhadap writeup: AI hanya memberi saran, tidak pernah menyimpan.
+    Route::post('/challenges/{challenge}/ai/assist', [App\Http\Controllers\ChallengeController::class, 'assist'])
+        ->middleware('throttle:5,1')
+        ->name('challenges.ai.assist');
+
     // API untuk mendapatkan daftar lab, kategori, dan cek keberadaan folder
     Route::get('/api/labs', [App\Http\Controllers\ChallengeController::class, 'labs'])
         ->name('api.labs');
@@ -58,7 +66,14 @@ Route::middleware('auth')->group(function () {
 
     // Route untuk membuka folder fisik note
     Route::post('/notes/{note}/open-folder', [App\Http\Controllers\NoteController::class, 'openFolder'])->name('notes.openFolder');
-    Route::get('/notes/{note}/images/{filename}', [App\Http\Controllers\NoteController::class, 'serveImage'])->name('notes.image');
+
+    // Route AI "Improve Writeup" (Phase 4):
+    // - auth group + ownership check di controller;
+    // - throttle 5/menit untuk cegah resource exhaustion & duplicate spam
+    //   (AI request mahal: model lokal tetap butuh resource).
+    Route::post('/notes/{note}/ai/improve', [App\Http\Controllers\NoteController::class, 'improve'])
+        ->middleware('throttle:5,1')
+        ->name('notes.ai.improve');
 });
 
 require __DIR__.'/auth.php';

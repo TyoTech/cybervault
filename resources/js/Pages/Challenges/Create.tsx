@@ -1,335 +1,96 @@
-import { FormEventHandler, useEffect, useRef, useState } from 'react';
+import { FormEventHandler } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
-import Input from '@/Components/UI/Input';
 import Button from '@/Components/UI/Button';
-import { ArrowLeft, Save, X, FileText, ChevronDown, Folder, Upload } from 'lucide-react';
-import { useChallengeValidation } from '@/Hooks/useChallengeValidation';
-
-interface PreviewFile {
-  file: File;
-  preview?: string;
-}
+import PageHeader from '@/Components/UI/PageHeader';
+import FolderFields from '@/Components/Challenges/FolderFields';
+import AttachmentField from '@/Components/Challenges/AttachmentField';
+import WriteupEditor from '@/Components/Writeup/WriteupEditor';
+import { emptyWriteup, WriteupData } from '@/Components/Writeup/types';
+import { Save } from 'lucide-react';
 
 export default function ChallengeCreate() {
-  const { data, setData, post, processing, errors } = useForm({
-    lab: '',
-    kategori: '',
-    judul: '',
-    konten_writeup: '',
-    files: [] as File[],
-  });
+    const { data, setData, post, processing, errors } = useForm({
+        lab: '',
+        kategori: '',
+        judul: '',
+        writeup: emptyWriteup() as WriteupData,
+        files: [] as File[],
+    });
 
-  const [labs, setLabs] = useState<string[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
-  const [showLabDropdown, setShowLabDropdown] = useState(false);
-  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
-  const [filteredLabs, setFilteredLabs] = useState<string[]>([]);
-  const [filteredCategories, setFilteredCategories] = useState<string[]>([]);
-  const [previewFiles, setPreviewFiles] = useState<PreviewFile[]>([]);
-  const [dragging, setDragging] = useState(false);
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const labRef = useRef<HTMLDivElement>(null);
-  const categoryRef = useRef<HTMLDivElement>(null);
-
-  const { labExists, categoryExists, titleExists } = useChallengeValidation(data.lab, data.kategori, data.judul);
-
-  const submit: FormEventHandler = (e) => {
-    e.preventDefault();
-    post(route('challenges.store'));
-  };
-
-  useEffect(() => {
-    fetch(route('api.labs'))
-      .then((res) => res.json())
-      .then((data) => {
-        setLabs(data);
-        setFilteredLabs(data);
-      });
-  }, []);
-
-  useEffect(() => {
-    if (!data.lab) {
-      setCategories([]);
-      return;
-    }
-    fetch(route('api.categories', data.lab))
-      .then((res) => res.json())
-      .then((data) => {
-        setCategories(data);
-        setFilteredCategories(data);
-      });
-  }, [data.lab]);
-
-  useEffect(() => {
-    setFilteredLabs(labs.filter((lab) => lab.toLowerCase().includes(data.lab.toLowerCase())));
-  }, [data.lab, labs]);
-
-  useEffect(() => {
-    setFilteredCategories(categories.filter((category) => category.toLowerCase().includes(data.kategori.toLowerCase())));
-  }, [data.kategori, categories]);
-
-  useEffect(() => {
-    const previews = data.files.map((file) => ({
-      file,
-      preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined,
-    }));
-    setPreviewFiles(previews);
-
-    return () => {
-      previews.forEach((p) => {
-        if (p.preview) URL.revokeObjectURL(p.preview);
-      });
+    const submit: FormEventHandler = (e) => {
+        e.preventDefault();
+        post(route('challenges.store'));
     };
-  }, [data.files]);
 
-  const selectLab = (lab: string) => {
-    setData('lab', lab);
-    setData('kategori', '');
-    setShowLabDropdown(false);
-  };
-
-  const selectCategory = (category: string) => {
-    setData('kategori', category);
-    setShowCategoryDropdown(false);
-  };
-
-  const removeFile = (index: number) => {
-    setData('files', data.files.filter((_, i) => i !== index));
-  };
-
-  const addFiles = (files: File[]) => {
-    setData('files', [...data.files, ...files]);
-  };
-
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setDragging(false);
-    addFiles(Array.from(e.dataTransfer.files));
-  };
-
-  const browseFile = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleChooseFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files) return;
-    addFiles(Array.from(e.target.files));
-    e.target.value = '';
-  };
-
-  useEffect(() => {
-    const listener = (event: MouseEvent) => {
-      if (labRef.current && !labRef.current.contains(event.target as Node)) setShowLabDropdown(false);
-      if (categoryRef.current && !categoryRef.current.contains(event.target as Node)) setShowCategoryDropdown(false);
+    const setField = (key: 'lab' | 'kategori' | 'judul', value: string) => {
+        setData(key, value);
     };
-    document.addEventListener('mousedown', listener);
-    return () => document.removeEventListener('mousedown', listener);
-  }, []);
 
-  return (
-    <AuthenticatedLayout header="Tambah Challenge">
-      <Head title="Tambah Challenge" />
-      <Link
-        href={route('challenges.index')}
-        className="inline-flex items-center text-sm text-zinc-400 hover:text-zinc-200 transition-colors mb-6"
-      >
-        <ArrowLeft className="w-4 h-4 mr-2" /> Batal
-      </Link>
+    return (
+        <AuthenticatedLayout header="Writeup Baru">
+            <Head title="Tambah Writeup" />
 
-      <div className="mb-6 rounded-lg bg-zinc-900 border border-zinc-800 p-4">
-        <p className="text-sm text-zinc-400">Writeup akan disimpan langsung ke folder</p>
-        <p className="font-mono text-blue-400 mt-2">
-          ~/Cyber/lab/{data.lab || 'Lab'}/{data.kategori || 'Kategori'}/{data.judul || 'Judul'}
-        </p>
-      </div>
+            <PageHeader
+                title="Writeup Baru"
+                description="Buat workspace terstruktur untuk menganalisis challenge."
+                actions={
+                    <Link href={route('challenges.index')}>
+                        <Button variant="ghost" size="sm">Batal</Button>
+                    </Link>
+                }
+            />
 
-      <form onSubmit={submit} className="space-y-6 max-w-7xl mx-auto" encType="multipart/form-data">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div ref={labRef} className="relative z-50">
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Lab</label>
-            <div className="relative">
-              <Input
-                value={data.lab}
-                required
-                onChange={(e) => {
-                  setData('lab', e.target.value);
-                  setShowLabDropdown(true);
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => setShowLabDropdown(!showLabDropdown)}
-                className="absolute right-3 top-1/2 -translate-y-1/2"
-              >
-                <ChevronDown className="w-4 h-4 text-zinc-500" />
-              </button>
-
-              {showLabDropdown && (
-                <div className="absolute top-full left-0 mt-1 z-50 w-full rounded-lg border border-zinc-700 bg-zinc-900 shadow-xl max-h-56 overflow-auto">
-                  {filteredLabs.length === 0 ? (
-                    <div className="p-3 text-zinc-500">Tidak ada folder.</div>
-                  ) : (
-                    filteredLabs.map((lab) => (
-                      <button
-                        key={lab}
-                        type="button"
-                        onClick={() => selectLab(lab)}
-                        className="w-full text-left px-3 py-2 hover:bg-zinc-800 flex items-center gap-2"
-                      >
-                        <Folder className="w-4 h-4 text-blue-500" />
-                        {lab}
-                      </button>
-                    ))
-                  )}
-                </div>
-              )}
+            {/* Path target folder */}
+            <div className="rounded-md border border-edge bg-surface px-4 py-3">
+                <p className="text-[13px] text-faint">
+                    Writeup akan disimpan sebagai workspace folder di:
+                </p>
+                <p className="mt-1 font-mono text-[13px] text-accent">
+                    ~/Cyber/lab/{data.lab || 'Lab'}/{data.kategori || 'Kategori'}/{data.judul || 'Judul'}
+                </p>
             </div>
 
-            {data.lab !== '' && (
-              <p className={`mt-2 text-sm ${labExists ? 'text-green-400' : 'text-blue-400'}`}>
-                {labExists ? '✓ Folder ditemukan' : 'ℹ Folder otomatis dibuat'}
-              </p>
+            {errors.writeup && (
+                <div className="rounded-md border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">
+                    {typeof errors.writeup === 'string' ? errors.writeup : 'Data writeup tidak valid.'}
+                </div>
             )}
-          </div>
 
-          <div ref={categoryRef} className="relative z-40">
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Kategori</label>
-            <div className="relative">
-              <Input
-                value={data.kategori}
-                required
-                onChange={(e) => {
-                  setData('kategori', e.target.value);
-                  setShowCategoryDropdown(true);
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-                className="absolute right-3 top-1/2 -translate-y-1/2"
-              >
-                <ChevronDown className="w-4 h-4 text-zinc-500" />
-              </button>
-
-              {showCategoryDropdown && (
-                <div className="absolute top-full left-0 mt-1 z-50 w-full rounded-lg bg-zinc-900 border border-zinc-700 max-h-56 overflow-auto shadow-xl">
-                  {filteredCategories.length === 0 ? (
-                    <div className="p-3 text-zinc-500 text-sm">Tidak ada folder.</div>
-                  ) : (
-                    filteredCategories.map((category) => (
-                      <button
-                        key={category}
-                        type="button"
-                        onClick={() => selectCategory(category)}
-                        className="w-full text-left px-3 py-2 hover:bg-zinc-800 flex items-center gap-2"
-                      >
-                        <Folder className="w-4 h-4 text-green-500" />
-                        {category}
-                      </button>
-                    ))
-                  )}
+            <form onSubmit={submit} className="space-y-6" encType="multipart/form-data">
+                <div className="rounded-lg border border-edge bg-surface p-5">
+                    <FolderFields values={data} onChange={setField} />
                 </div>
-              )}
-            </div>
 
-            {data.kategori !== '' && (
-              <p className={`mt-2 text-sm ${categoryExists ? 'text-green-400' : 'text-blue-400'}`}>
-                {categoryExists ? '✓ Folder ditemukan' : 'ℹ Folder otomatis dibuat'}
-              </p>
-            )}
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-zinc-300 mb-1.5">Judul Challenge</label>
-          <Input
-            value={data.judul}
-            onChange={(e) => setData('judul', e.target.value)}
-            required
-            className={titleExists ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}
-          />
-          {data.judul !== '' && (
-             <p className={`mt-2 text-sm ${titleExists ? 'text-red-500' : 'text-green-400'}`}>
-               {titleExists ? '⚠ Judul sudah ada di folder tersebut' : '✓ Judul tersedia (Folder akan dibuat)'}
-             </p>
-          )}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-zinc-300 mb-1.5">Isi Writeup (.txt)</label>
-          <textarea
-            rows={8}
-            className="w-full rounded-md border border-white/10 bg-zinc-900 px-3 py-2 text-zinc-100 focus:ring-blue-500 focus:border-blue-500 outline-none"
-            value={data.konten_writeup}
-            onChange={(e) => setData('konten_writeup', e.target.value)}
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-zinc-300 mb-2">Lampiran (Bisa Banyak)</label>
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            hidden
-            onChange={handleChooseFile}
-          />
-          <div
-            onClick={browseFile}
-            onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-            onDragLeave={() => setDragging(false)}
-            onDrop={handleDrop}
-            className={`rounded-xl border-2 border-dashed cursor-pointer p-10 transition ${
-              dragging ? 'border-blue-500 bg-blue-500/10' : 'border-zinc-700'
-            }`}
-          >
-            <div className="flex flex-col items-center">
-              <Upload className="w-10 h-10 text-blue-500" />
-              <p className="mt-3 text-zinc-200">Klik untuk memilih file</p>
-              <p className="text-sm text-zinc-500">atau drag & drop file di sini</p>
-            </div>
-          </div>
-        </div>
-
-        {previewFiles.length > 0 && (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-6">
-            {previewFiles.map((item, index) => (
-              <div key={index} className="relative rounded-xl border border-zinc-700 bg-zinc-900 overflow-hidden">
-                <button
-                  type="button"
-                  onClick={() => removeFile(index)}
-                  className="absolute top-2 right-2 z-20 rounded-full bg-red-600 p-1 hover:bg-red-700"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-                {item.preview ? (
-                  <img src={item.preview} className="w-full h-36 object-cover" />
-                ) : (
-                  <div className="h-36 flex flex-col justify-center items-center">
-                    <FileText className="w-12 h-12 text-blue-500" />
-                  </div>
-                )}
-                <div className="p-3">
-                  <p className="text-sm truncate text-zinc-200">{item.file.name}</p>
-                  <p className="text-xs text-zinc-500">{(item.file.size / 1024).toFixed(1)} KB</p>
+                <div>
+                    <div className="mb-3 flex items-center justify-between">
+                        <h2 className="text-sm font-medium text-strong">Workspace Writeup</h2>
+                        <p className="text-xs text-faint">
+                            Source-of-truth: <code className="text-muted">writeup.json</code> di folder challenge
+                        </p>
+                    </div>
+                    <WriteupEditor
+                        value={data.writeup}
+                        onChange={(next) => setData('writeup', next)}
+                    />
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
 
-        <div className="flex justify-end pt-4 border-t border-white/10">
-          <Button
-            type="submit"
-            disabled={processing || titleExists}
-          >
-            <Save className="w-4 h-4 mr-2" />
-            {processing ? 'Menyimpan...' : 'Simpan ke Laptop'}
-          </Button>
-        </div>
-      </form>
-    </AuthenticatedLayout>
-  );
+                <AttachmentField
+                    files={data.files}
+                    onAdd={(files) => setData('files', [...data.files, ...files])}
+                    onRemove={(index) => setData('files', data.files.filter((_, i) => i !== index))}
+                />
+
+                <div className="flex items-center justify-end gap-2 border-t border-edge pt-5">
+                    <Link href={route('challenges.index')}>
+                        <Button type="button" variant="ghost">Batal</Button>
+                    </Link>
+                    <Button type="submit" disabled={processing}>
+                        <Save className="h-4 w-4" />
+                        {processing ? 'Menyimpan…' : 'Simpan Writeup'}
+                    </Button>
+                </div>
+            </form>
+        </AuthenticatedLayout>
+    );
 }

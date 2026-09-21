@@ -1,9 +1,10 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/Components/UI/Card';
-import { Shield, Book, Terminal, Code, Activity, Clock } from 'lucide-react';
+import { Card } from '@/Components/UI/Card';
+import Button from '@/Components/UI/Button';
+import PageHeader from '@/Components/UI/PageHeader';
 import EmptyState from '@/Components/UI/EmptyState';
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'; // Import wajib ditambah
+import { Book, Shield, Terminal, Wrench, FileText, Inbox } from 'lucide-react';
 
 interface DashboardProps {
   stats: {
@@ -17,10 +18,7 @@ interface DashboardProps {
     title: string;
     updated_at: string;
   }>;
-  activityData: Array<{
-    name: string;
-    solved: number;
-  }>;
+  activityData?: Array<{ name: string; solved: number }>;
 }
 
 export default function Dashboard({
@@ -31,9 +29,7 @@ export default function Dashboard({
     total_tools: 0,
   },
   recentDrafts = [],
-  activityData = [], // Parameter wajib ditambah
 }: DashboardProps) {
-
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return new Intl.DateTimeFormat('id-ID', {
@@ -44,146 +40,82 @@ export default function Dashboard({
     }).format(date);
   };
 
+  const quickActions = [
+    { label: 'Catatan', href: route('notes.create'), icon: Book },
+    { label: 'Challenge', href: route('challenges.create'), icon: Shield },
+    { label: 'Payload', href: route('payloads.create'), icon: Terminal },
+    { label: 'Tool', href: route('tools.create'), icon: Wrench },
+  ];
+
+  const statsItems = [
+    { label: 'Catatan', value: stats.total_notes },
+    { label: 'Challenge selesai', value: stats.challenges_solved },
+    { label: 'Payload', value: stats.total_payloads },
+    { label: 'Tools', value: stats.total_tools },
+  ];
+
   return (
-    <AuthenticatedLayout header="Overview">
+    <AuthenticatedLayout header="Dashboard">
       <Head title="Dashboard" />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-zinc-400">
-              Challenge Solved
-            </CardTitle>
-            <Shield className="w-4 h-4 text-emerald-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-zinc-100">
-              {stats.challenges_solved}
-            </div>
-          </CardContent>
-        </Card>
+      <PageHeader
+        title="Dashboard"
+        description="Ringkasan workspace dan akses cepat."
+        actions={
+          <>
+            {quickActions.map((action) => (
+              <Link key={action.label} href={action.href}>
+                <Button variant="secondary" size="sm">
+                  <action.icon className="h-4 w-4" aria-hidden="true" /> {action.label}
+                </Button>
+              </Link>
+            ))}
+          </>
+        }
+      />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-zinc-400">
-              Total Notes
-            </CardTitle>
-            <Book className="w-4 h-4 text-blue-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-zinc-100">
-              {stats.total_notes}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-zinc-400">
-              Payload Vault
-            </CardTitle>
-            <Terminal className="w-4 h-4 text-purple-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-zinc-100">
-              {stats.total_payloads}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-zinc-400">
-              Custom Tools
-            </CardTitle>
-            <Code className="w-4 h-4 text-orange-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-zinc-100">
-              {stats.total_tools}
-            </div>
-          </CardContent>
-        </Card>
+      {/* Statistik ringkas — satu baris, bukan sekumpulan kartu */}
+      <div className="grid grid-cols-2 divide-x divide-edge overflow-hidden rounded-lg border border-edge bg-surface sm:grid-cols-4">
+        {statsItems.map((item) => (
+          <div key={item.label} className="px-4 py-3.5">
+            <div className="text-lg font-semibold tabular-nums text-strong">{item.value}</div>
+            <div className="mt-0.5 text-xs text-faint">{item.label}</div>
+          </div>
+        ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-        <Card className="lg:col-span-2 flex flex-col">
-          <CardHeader>
-            <CardTitle className="flex items-center text-zinc-100">
-              <Activity className="w-4 h-4 mr-2 text-blue-500" />
-              Aktivitas Solving (7 Hari Terakhir)
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex-1 min-h-250px">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart
-                data={activityData}
-                margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-              >
-                <defs>
-                  <linearGradient id="colorSolved" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <XAxis
-                  dataKey="name"
-                  stroke="#52525b"
-                  fontSize={12}
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <YAxis
-                  stroke="#52525b"
-                  fontSize={12}
-                  tickLine={false}
-                  axisLine={false}
-                  allowDecimals={false}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#09090b',
-                    borderColor: '#27272a',
-                    borderRadius: '8px',
-                    color: '#f4f4f5',
-                  }}
-                  itemStyle={{ color: '#3b82f6' }}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="solved"
-                  stroke="#3b82f6"
-                  strokeWidth={3}
-                  fillOpacity={1}
-                  fill="url(#colorSolved)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+      {/* Catatan terbaru */}
+      <div>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-sm font-medium text-strong">Catatan Terbaru</h2>
+          <Link href={route('notes.index')} className="text-[13px] text-faint transition-colors hover:text-body">
+            Lihat semua
+          </Link>
+        </div>
 
         <Card>
-          <CardHeader>
-            <CardTitle className="text-zinc-100">Catatan Terbaru</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {recentDrafts.length === 0 ? (
-              <EmptyState
-                  icon={<Clock className="w-8 h-8" />}
-                  title="Belum ada catatan"
-                  description="Catatan yang baru diedit akan muncul di sini."
-              />
-            ) : (
-              <div className="space-y-4">
-                  {recentDrafts.map(draft => (
-                      <Link key={draft.id} href={route('notes.show', draft.id)} className="block p-4 rounded-lg border border-white/5 bg-white/5 hover:bg-white/10 transition-colors">
-                          <h4 className="text-zinc-100 font-medium truncate">{draft.title}</h4>
-                          <p className="text-xs text-zinc-500 mt-1">Diperbarui {formatDate(draft.updated_at)}</p>
-                      </Link>
-                  ))}
-              </div>
-            )}
-          </CardContent>
+          {recentDrafts.length === 0 ? (
+            <EmptyState
+              icon={<Inbox className="h-4 w-4" />}
+              title="Belum ada catatan"
+              description="Catatan yang baru diedit akan muncul di sini."
+            />
+          ) : (
+            <ul className="divide-y divide-edge">
+              {recentDrafts.map((draft) => (
+                <li key={draft.id}>
+                  <Link
+                    href={route('notes.show', draft.id)}
+                    className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-elevated/60"
+                  >
+                    <FileText className="h-4 w-4 shrink-0 text-muted" aria-hidden="true" />
+                    <span className="min-w-0 flex-1 truncate text-sm text-strong">{draft.title}</span>
+                    <span className="shrink-0 text-xs text-faint">Diperbarui {formatDate(draft.updated_at)}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
         </Card>
       </div>
     </AuthenticatedLayout>

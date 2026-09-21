@@ -3,33 +3,61 @@ import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
+/**
+ * Tema code block: latar konsisten dengan CodeBlock (gelap netral),
+ * bukan background terang default.
+ */
+const codeTheme: { [key: string]: React.CSSProperties } = {
+    ...(vscDarkPlus as Record<string, React.CSSProperties>),
+    'pre[class*="language-"]': {
+        ...(vscDarkPlus as Record<string, React.CSSProperties>)['pre[class*="language-"]'],
+        background: 'var(--cv-code-bg)',
+        borderRadius: '0.375rem',
+        border: '1px solid #26282e',
+        margin: '0.75rem 0',
+        padding: '0.875rem 1rem',
+    },
+    'code[class*="language-"]': {
+        ...(vscDarkPlus as Record<string, React.CSSProperties>)['code[class*="language-"]'],
+        background: 'var(--cv-code-bg)',
+        textShadow: 'none',
+        fontSize: '0.8125rem',
+    },
+};
+
 export default function MarkdownViewer({ content }: { content: string }) {
     return (
-        <div className="prose prose-invert max-w-none prose-pre:bg-transparent prose-pre:p-0">
+        <div className="prose max-w-none">
             <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 components={{
                     img: ({ node, ...props }: any) => (
-                        <img {...props} className="rounded-lg border border-white/10 max-w-full my-4" loading="lazy" />
+                        <img
+                            {...props}
+                            className="my-4 max-w-full rounded-lg border border-edge"
+                            loading="lazy"
+                        />
+                    ),
+                    a: ({ node, ...props }: any) => (
+                        <a {...props} target="_blank" rel="noopener noreferrer" />
                     ),
                     code({ node, inline, className, children, ...props }: any) {
                         const match = /language-(\w+)/.exec(className || '');
                         return !inline && match ? (
                             <SyntaxHighlighter
-                                style={vscDarkPlus as any}
+                                style={codeTheme}
                                 language={match[1]}
                                 PreTag="div"
-                                className="my-4 rounded-md border border-white/10"
                                 {...props}
                             >
                                 {String(children).replace(/\n$/, '')}
                             </SyntaxHighlighter>
                         ) : (
-                            <code className="bg-zinc-800 px-1.5 py-0.5 rounded text-sm text-blue-300" {...props}>
+                            <code className={className} {...props}>
                                 {children}
                             </code>
                         );
-                    }
+                    },
                 }}
             >
                 {content}

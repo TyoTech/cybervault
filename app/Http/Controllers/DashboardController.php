@@ -7,7 +7,6 @@ use Inertia\Inertia;
 use Carbon\Carbon;
 use App\Models\Challenge;
 use App\Models\Note;
-use App\Models\Payload;
 use App\Models\Tool;
 
 class DashboardController extends Controller
@@ -27,7 +26,8 @@ class DashboardController extends Controller
             'stats' => [
                 'challenges_solved' => Challenge::where('user_id', $userId)->count(),
                 'total_notes' => Note::where('user_id', $userId)->count(),
-                'total_payloads' => Payload::where('user_id', $userId)->count(),
+                // Source of truth payload adalah file payloads/*.txt (bukan tabel database)
+                'total_payloads' => count((new PayloadController)->getAllPayloads()),
                 'total_tools' => Tool::where('user_id', $userId)->count(),
             ],
             'recentDrafts' => Note::where('user_id', $userId)

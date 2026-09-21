@@ -7,8 +7,21 @@
 
         <title inertia>{{ config('app.name', 'Laravel') }}</title>
 
+        <!-- Terapkan tema sebelum paint (anti-FOUC). Nilai: light | dark | system.
+     Inline script ini diizinkan CSP production via hash sha256 di
+     app/Http/Middleware/SecurityHeaders.php — jika isinya diubah, hash harus diperbarui. -->
+        <script>
+            (function () {
+                try {
+                    var stored = localStorage.getItem('cv-theme') || 'system';
+                    var dark = stored === 'dark'
+                        || (stored === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                    document.documentElement.classList.toggle('dark', dark);
+                } catch (e) { /* localStorage tidak tersedia — biarkan default light */ }
+            })();
+        </script>
+
         <!-- Scripts -->
-        @routes
         @viteReactRefresh
         @vite(['resources/js/app.tsx', "resources/js/Pages/{$page['component']}.tsx"])
         @inertiaHead

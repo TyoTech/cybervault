@@ -1,9 +1,11 @@
 import { FormEventHandler } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, Link } from '@inertiajs/react';
 import Input from '@/Components/UI/Input';
 import Button from '@/Components/UI/Button';
-import { Plus, Trash2 } from 'lucide-react';
+import PageHeader from '@/Components/UI/PageHeader';
+import { Plus, Trash2, Save } from 'lucide-react';
+import { cn } from '@/Utils/cn';
 
 export default function ToolCreate() {
     const { data, setData, post, processing, errors } = useForm({
@@ -35,76 +37,119 @@ export default function ToolCreate() {
     };
 
     return (
-        <AuthenticatedLayout header="Tambah Tool">
+        <AuthenticatedLayout header="Tool Baru">
             <Head title="Tambah Tool" />
 
-            <form onSubmit={submit} className="space-y-6 max-w-3xl">
-                <div className="grid grid-cols-2 gap-4">
+            <PageHeader
+                title="Tool Baru"
+                description="Simpan kumpulan perintah untuk workflow tertentu."
+                actions={
+                    <Link href={route('tools.index')}>
+                        <Button variant="ghost" size="sm">Batal</Button>
+                    </Link>
+                }
+            />
+
+            <form onSubmit={submit} className="max-w-3xl space-y-6">
+                <div className="grid gap-5 sm:grid-cols-2">
                     <div>
-                        <label className="block text-sm font-medium text-zinc-300 mb-1.5">Nama Tool</label>
+                        <label htmlFor="name" className="mb-1.5 block text-sm font-medium text-body">
+                            Nama Tool
+                        </label>
                         <Input
+                            id="name"
                             value={data.name}
                             onChange={(e) => setData('name', e.target.value)}
+                            placeholder="Contoh: Nmap"
                             required
                         />
-                        {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+                        {errors.name && <p className="mt-1.5 text-xs text-danger">{errors.name}</p>}
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-zinc-300 mb-1.5">Kategori/Workflow</label>
+                        <label htmlFor="workflow" className="mb-1.5 block text-sm font-medium text-body">
+                            Workflow
+                        </label>
                         <Input
+                            id="workflow"
                             value={data.workflow}
                             onChange={(e) => setData('workflow', e.target.value)}
+                            placeholder="Contoh: Reconnaissance"
                             required
                         />
-                        {errors.workflow && <p className="text-red-500 text-xs mt-1">{errors.workflow}</p>}
+                        {errors.workflow && <p className="mt-1.5 text-xs text-danger">{errors.workflow}</p>}
                     </div>
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-zinc-300 mb-1.5">Catatan/Pro Tip (Opsional)</label>
+                    <label htmlFor="notes" className="mb-1.5 block text-sm font-medium text-body">
+                        Catatan <span className="font-normal text-faint">(opsional)</span>
+                    </label>
                     <Input
+                        id="notes"
                         value={data.notes}
                         onChange={(e) => setData('notes', e.target.value)}
+                        placeholder="Pro tip singkat"
                     />
                 </div>
 
-                <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                        <label className="block text-sm font-medium text-zinc-300">Daftar Perintah (Commands)</label>
+                <div>
+                    <div className="mb-3 flex items-center justify-between">
+                        <label className="text-sm font-medium text-body">Daftar Perintah</label>
                         <Button type="button" variant="secondary" size="sm" onClick={addCommand}>
-                            <Plus className="w-4 h-4 mr-1" /> Tambah Baris
+                            <Plus className="h-4 w-4" /> Tambah Baris
                         </Button>
                     </div>
 
-                    {data.commands.map((cmd, idx) => (
-                        <div key={idx} className="flex gap-3 items-start border border-white/5 p-4 rounded-lg bg-zinc-900/30">
-                            <div className="flex-1 space-y-3">
-                                <Input
-                                    placeholder="Deskripsi (Contoh: Fast Scan)"
-                                    value={cmd.desc}
-                                    onChange={(e) => updateCommand(idx, 'desc', e.target.value)}
-                                    required
-                                />
-                                <Input
-                                    placeholder="Perintah (Contoh: nmap -F <target>)"
-                                    value={cmd.code}
-                                    onChange={(e) => updateCommand(idx, 'code', e.target.value)}
-                                    className="font-mono text-sm"
-                                    required
-                                />
+                    <div className="space-y-3">
+                        {data.commands.map((cmd, idx) => (
+                            <div
+                                key={idx}
+                                className={cn(
+                                    'flex items-start gap-3 rounded-md border border-edge bg-surface p-4',
+                                    idx > 0 && 'border-dashed bg-transparent'
+                                )}
+                            >
+                                <div className="flex-1 space-y-3">
+                                    <Input
+                                        placeholder="Deskripsi (Contoh: Fast Scan)"
+                                        value={cmd.desc}
+                                        onChange={(e) => updateCommand(idx, 'desc', e.target.value)}
+                                        required
+                                    />
+                                    <Input
+                                        placeholder="Perintah (Contoh: nmap -F target)"
+                                        value={cmd.code}
+                                        onChange={(e) => updateCommand(idx, 'code', e.target.value)}
+                                        className="font-mono text-[13px]"
+                                        required
+                                    />
+                                </div>
+                                {data.commands.length > 1 && (
+                                    <Button
+                                        type="button"
+                                        variant="danger"
+                                        size="sm"
+                                        onClick={() => removeCommand(idx)}
+                                        className="mt-0.5"
+                                        aria-label={`Hapus perintah ${idx + 1}`}
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                )}
                             </div>
-                            {data.commands.length > 1 && (
-                                <Button type="button" variant="danger" size="sm" onClick={() => removeCommand(idx)} className="mt-1">
-                                    <Trash2 className="w-4 h-4" />
-                                </Button>
-                            )}
-                        </div>
-                    ))}
+                        ))}
+                    </div>
                 </div>
 
-                <Button type="submit" disabled={processing}>
-                    {processing ? 'Menyimpan...' : 'Simpan Tool'}
-                </Button>
+                <div className="flex items-center justify-end gap-2 border-t border-edge pt-5">
+                    <Link href={route('tools.index')}>
+                        <Button type="button" variant="ghost">Batal</Button>
+                    </Link>
+                    <Button type="submit" disabled={processing}>
+                        <Save className="h-4 w-4" />
+                        {processing ? 'Menyimpan...' : 'Simpan Tool'}
+                    </Button>
+                </div>
             </form>
         </AuthenticatedLayout>
     );

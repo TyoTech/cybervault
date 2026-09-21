@@ -9,10 +9,12 @@ use Illuminate\Support\Facades\Storage;
 
 class PayloadController extends Controller
 {
+    private const DELIMITER = '--- END ---';
+
     private $disk = 'cyber';
     private $dir = 'payloads';
 
-    private function getAllPayloads()
+    public function getAllPayloads()
     {
         $all = [];
         if (!Storage::disk($this->disk)->exists($this->dir)) {
@@ -37,7 +39,7 @@ class PayloadController extends Controller
         if (!Storage::disk($this->disk)->exists($path)) return [];
 
         $content = Storage::disk($this->disk)->get($path);
-        $blocks = explode("--- END ---", $content);
+        $blocks = explode(self::DELIMITER, $content);
         $payloads = [];
 
         foreach ($blocks as $block) {
@@ -72,7 +74,7 @@ class PayloadController extends Controller
             $content .= "Judul: {$p['title']}\n";
             $content .= "Deskripsi: {$p['description']}\n";
             $content .= "Payload:\n{$p['content']}\n";
-            $content .= "--- END ---\n\n";
+            $content .= self::DELIMITER . "\n\n";
         }
 
         Storage::disk($this->disk)->put($path, $content);
@@ -98,6 +100,17 @@ class PayloadController extends Controller
             'description' => 'nullable|string',
             'content' => 'required|string',
         ]);
+
+        // Normalisasi & validasi keamanan kategori (nama file) — cegah path traversal
+        $validated['category'] = trim($validated['category']);
+        if (!$this->isValidCategory($validated['category'])) {
+            return back()->withErrors(['category' => 'Kategori tidak valid.'])->withInput();
+        }
+
+        // Cegah data loss: delimiter pemisah blok tidak boleh ada di field
+        if ($field = $this->findDelimiterField($validated['title'], $validated['description'] ?? '', $validated['content'])) {
+            return back()->withErrors([$field => 'Nilai ini tidak boleh mengandung ' . self::DELIMITER . '.'])->withInput();
+        }
 
         $category = $validated['category'];
         $payloads = $this->parseFile($category);
@@ -131,6 +144,17 @@ class PayloadController extends Controller
             'description' => 'nullable|string',
             'content' => 'required|string',
         ]);
+
+        // Normalisasi & validasi keamanan kategori (nama file) — cegah path traversal
+        $validated['category'] = trim($validated['category']);
+        if (!$this->isValidCategory($validated['category'])) {
+            return back()->withErrors(['category' => 'Kategori tidak valid.'])->withInput();
+        }
+
+        // Cegah data loss: delimiter pemisah blok tidak boleh ada di field
+        if ($field = $this->findDelimiterField($validated['title'], $validated['description'] ?? '', $validated['content'])) {
+            return back()->withErrors([$field => 'Nilai ini tidak boleh mengandung ' . self::DELIMITER . '.'])->withInput();
+        }
 
         $all = $this->getAllPayloads();
         $oldPayload = collect($all)->firstWhere('id', $id);
@@ -176,5 +200,32 @@ class PayloadController extends Controller
         $this->saveToFile($payload['category'], $payloads);
 
         return redirect()->route('payloads.index');
+    }
+
+    /**
+     * Validasi nama kategori (digunakan sebagai nama file payloads/{category}.txt).
+     * Whitelist: huruf, angka, spasi, titik, underscore, hyphen.
+     * Menolak nama kosong dan "." / ".." agar tidak keluar dari direktori payloads/.
+     */
+    private function isValidCategory(string $category): bool
+    {
+        return $category !== ''
+            && $category !== '.'
+            && $category !== '..'
+            && preg_match('/^[A-Za-z0-9 _.-]+$/', $category) === 1;
+    }
+
+    /**
+     * Cek apakah sebuah field mengandung delimiter pemisah blok.
+     * Delimiter di dalam field akan merusak parsing file dan menyebabkan data loss.
+     * Mengembalikan nama field yang bermasalah, atau null bila aman.
+     */
+    private function findDelimiterField(string $title, string $description, string $content): ?string
+    {
+        if (str_contains($title, self::DELIMITER)) return 'title';
+        if (str_contains($description, self::DELIMITER)) return 'description';
+        if (str_contains($content, self::DELIMITER)) return 'content';
+
+        return null;
     }
 }

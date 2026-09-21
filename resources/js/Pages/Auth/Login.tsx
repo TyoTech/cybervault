@@ -28,16 +28,16 @@ export default function Login({ status, canResetPassword }: { status?: string, c
             <Head title="Masuk" />
 
             <Card>
-                <CardHeader className="text-center pb-2">
-                    <CardTitle className="text-2xl">Masuk ke CyberVault</CardTitle>
-                    <p className="text-sm text-zinc-500 mt-2">Personal Security Workspace</p>
+                <CardHeader className="pb-2">
+                    <CardTitle>Masuk</CardTitle>
+                    <p className="text-sm text-faint mt-1">Akses workspace keamanan Anda.</p>
                 </CardHeader>
                 <CardContent>
-                    {status && <div className="mb-4 font-medium text-sm text-green-500">{status}</div>}
+                    {status && <div className="mb-4 text-sm font-medium text-success">{status}</div>}
 
                     <form onSubmit={submit} className="space-y-5 mt-4">
                         <div>
-                            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Email</label>
+                            <label className="block text-sm font-medium text-body mb-1.5">Email</label>
                             <Input
                                 id="email"
                                 type="email"
@@ -46,11 +46,11 @@ export default function Login({ status, canResetPassword }: { status?: string, c
                                 autoComplete="username"
                                 onChange={(e) => setData('email', e.target.value)}
                             />
-                            {errors.email && <p className="text-red-500 text-xs mt-1.5">{errors.email}</p>}
+                            {errors.email && <p className="text-danger text-xs mt-1.5">{errors.email}</p>}
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Password</label>
+                            <label className="block text-sm font-medium text-body mb-1.5">Password</label>
                             <Input
                                 id="password"
                                 type="password"
@@ -59,7 +59,7 @@ export default function Login({ status, canResetPassword }: { status?: string, c
                                 autoComplete="current-password"
                                 onChange={(e) => setData('password', e.target.value)}
                             />
-                            {errors.password && <p className="text-red-500 text-xs mt-1.5">{errors.password}</p>}
+                            {errors.password && <p className="text-danger text-xs mt-1.5">{errors.password}</p>}
                         </div>
 
                         <div className="flex items-center justify-between">
@@ -69,15 +69,15 @@ export default function Login({ status, canResetPassword }: { status?: string, c
                                     name="remember"
                                     checked={data.remember}
                                     onChange={(e) => setData('remember', e.target.checked)}
-                                    className="rounded border-white/10 bg-zinc-900/50 text-blue-600 shadow-sm focus:ring-blue-500/50 focus:ring-offset-zinc-900 transition-colors"
+                                    className="rounded border-edge bg-surface text-accent focus:ring-accent/50 focus:ring-offset-surface transition-colors"
                                 />
-                                <span className="ms-2 text-sm text-zinc-400 group-hover:text-zinc-300 transition-colors">Ingat sesi saya</span>
+                                <span className="ms-2 text-sm text-muted group-hover:text-body transition-colors">Ingat sesi saya</span>
                             </label>
 
                             {canResetPassword && (
                                 <Link
                                     href={route('password.request')}
-                                    className="text-sm text-zinc-400 hover:text-zinc-100 transition-colors"
+                                    className="text-sm text-muted hover:text-strong transition-colors"
                                 >
                                     Lupa password?
                                 </Link>
@@ -88,9 +88,9 @@ export default function Login({ status, canResetPassword }: { status?: string, c
                             {processing ? 'Otentikasi...' : 'Masuk'}
                         </Button>
 
-                        <div className="text-center mt-6 text-sm text-zinc-500">
+                        <div className="text-center mt-6 text-sm text-faint">
                             Belum memiliki akses?{' '}
-                            <Link href={route('register')} className="text-blue-500 hover:text-blue-400 font-medium transition-colors">
+                            <Link href={route('register')} className="text-accent hover:text-accent font-medium transition-colors">
                                 Daftar Workspace
                             </Link>
                         </div>

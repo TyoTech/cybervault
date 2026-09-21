@@ -1,6 +1,8 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { PageProps } from '@/types';
 import { Head } from '@inertiajs/react';
+import { Card } from '@/Components/UI/Card';
+import PageHeader from '@/Components/UI/PageHeader';
 import DeleteUserForm from './Partials/DeleteUserForm';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm';
@@ -10,33 +12,29 @@ export default function Edit({
     status,
 }: PageProps<{ mustVerifyEmail: boolean; status?: string }>) {
     return (
-        <AuthenticatedLayout
-            header={
-                <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                    Profile
-                </h2>
-            }
-        >
-            <Head title="Profile" />
+        <AuthenticatedLayout header="Pengaturan Akun">
+            <Head title="Pengaturan" />
 
-            <div className="py-12">
-                <div className="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
-                    <div className="bg-zinc-900 border border-white/10 p-4 shadow sm:rounded-lg sm:p-8">
-                        <UpdateProfileInformationForm
-                            mustVerifyEmail={mustVerifyEmail}
-                            status={status}
-                            className="max-w-xl"
-                        />
-                    </div>
+            <PageHeader
+                title="Pengaturan"
+                description="Kelola informasi profil dan keamanan akun Anda."
+            />
 
-                    <div className="bg-zinc-900 border border-white/10 p-4 shadow sm:rounded-lg sm:p-8">
-                        <UpdatePasswordForm className="max-w-xl" />
-                    </div>
+            <div className="space-y-4">
+                <Card className="p-5 sm:p-6">
+                    <UpdateProfileInformationForm
+                        mustVerifyEmail={mustVerifyEmail}
+                        status={status}
+                    />
+                </Card>
 
-                    <div className="bg-zinc-900 border border-white/10 p-4 shadow sm:rounded-lg sm:p-8">
-                        <DeleteUserForm className="max-w-xl" />
-                    </div>
-                </div>
+                <Card className="p-5 sm:p-6">
+                    <UpdatePasswordForm />
+                </Card>
+
+                <Card className="p-5 sm:p-6">
+                    <DeleteUserForm />
+                </Card>
             </div>
         </AuthenticatedLayout>
     );

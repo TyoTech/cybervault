@@ -2,8 +2,11 @@ import { FormEventHandler } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, Link } from '@inertiajs/react';
 import Input from '@/Components/UI/Input';
+import Select from '@/Components/UI/Select';
+import Textarea from '@/Components/UI/Textarea';
 import Button from '@/Components/UI/Button';
-import { ArrowLeft, Save } from 'lucide-react';
+import PageHeader from '@/Components/UI/PageHeader';
+import { Save } from 'lucide-react';
 
 const CATEGORIES = ['SQLi', 'XSS', 'LFI', 'RCE', 'Reverse Shell', 'PrivEsc'];
 
@@ -24,39 +27,82 @@ export default function PayloadEdit({ payload }: { payload: any }) {
         <AuthenticatedLayout header="Edit Payload">
             <Head title={`Edit ${payload.title}`} />
 
-            <Link href={route('payloads.index')} className="inline-flex items-center text-sm text-zinc-400 hover:text-zinc-200 transition-colors mb-6">
-                <ArrowLeft className="w-4 h-4 mr-2" /> Batal Edit
-            </Link>
+            <PageHeader
+                title="Edit Payload"
+                description="Perbarui detail dan isi payload."
+                actions={
+                    <Link href={route('payloads.index')}>
+                        <Button variant="ghost" size="sm">Batal</Button>
+                    </Link>
+                }
+            />
 
-            <form onSubmit={submit} className="space-y-6 max-w-2xl">
-                <div>
-                    <label className="block text-sm font-medium text-zinc-300 mb-1.5">Judul Payload</label>
-                    <Input value={data.title} onChange={(e) => setData('title', e.target.value)} required />
-                    {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title}</p>}
+            <form onSubmit={submit} className="max-w-2xl space-y-5">
+                <div className="grid gap-5 sm:grid-cols-3">
+                    <div className="sm:col-span-2">
+                        <label htmlFor="title" className="mb-1.5 block text-sm font-medium text-body">
+                            Judul
+                        </label>
+                        <Input
+                            id="title"
+                            value={data.title}
+                            onChange={(e) => setData('title', e.target.value)}
+                            required
+                        />
+                        {errors.title && <p className="mt-1.5 text-xs text-danger">{errors.title}</p>}
+                    </div>
+
+                    <div>
+                        <label htmlFor="category" className="mb-1.5 block text-sm font-medium text-body">
+                            Kategori
+                        </label>
+                        <Select
+                            id="category"
+                            value={data.category}
+                            onChange={(e) => setData('category', e.target.value)}
+                        >
+                            {CATEGORIES.map((c) => (
+                                <option key={c} value={c}>{c}</option>
+                            ))}
+                        </Select>
+                    </div>
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-zinc-300 mb-1.5">Kategori</label>
-                    <select value={data.category} onChange={(e) => setData('category', e.target.value)} className="w-full rounded-md border border-white/10 bg-zinc-900/50 px-3 py-2 text-sm text-zinc-100 outline-none">
-                        {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
+                    <label htmlFor="description" className="mb-1.5 block text-sm font-medium text-body">
+                        Deskripsi Singkat <span className="font-normal text-faint">(opsional)</span>
+                    </label>
+                    <Input
+                        id="description"
+                        value={data.description}
+                        onChange={(e) => setData('description', e.target.value)}
+                    />
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-zinc-300 mb-1.5">Deskripsi Singkat (Opsional)</label>
-                    <Input value={data.description} onChange={(e) => setData('description', e.target.value)} />
+                    <label htmlFor="content" className="mb-1.5 block text-sm font-medium text-body">
+                        Kode / Script Payload
+                    </label>
+                    <Textarea
+                        id="content"
+                        mono
+                        value={data.content}
+                        onChange={(e) => setData('content', e.target.value)}
+                        className="h-56 resize-y"
+                        required
+                    />
+                    {errors.content && <p className="mt-1.5 text-xs text-danger">{errors.content}</p>}
                 </div>
 
-                <div>
-                    <label className="block text-sm font-medium text-zinc-300 mb-1.5">Kode/Script Payload</label>
-                    <textarea value={data.content} onChange={(e) => setData('content', e.target.value)} className="w-full h-48 rounded-md border border-white/10 bg-zinc-950/80 p-4 text-sm text-zinc-100 font-mono outline-none resize-y" required />
-                    <p className="text-xs text-zinc-500 mt-2">Tips: Gunakan <code className="text-blue-400">[LHOST]</code> dan <code className="text-blue-400">[LPORT]</code> pada script.</p>
-                    {errors.content && <p className="text-red-500 text-xs mt-1">{errors.content}</p>}
+                <div className="flex items-center justify-end gap-2 border-t border-edge pt-5">
+                    <Link href={route('payloads.index')}>
+                        <Button type="button" variant="ghost">Batal</Button>
+                    </Link>
+                    <Button type="submit" disabled={processing}>
+                        <Save className="h-4 w-4" />
+                        {processing ? 'Menyimpan...' : 'Simpan Perubahan'}
+                    </Button>
                 </div>
-
-                <Button type="submit" disabled={processing}>
-                    <Save className="w-4 h-4 mr-2" /> Update Payload
-                </Button>
             </form>
         </AuthenticatedLayout>
     );

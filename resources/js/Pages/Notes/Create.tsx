@@ -3,7 +3,8 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, Link } from '@inertiajs/react';
 import Input from '@/Components/UI/Input';
 import Button from '@/Components/UI/Button';
-import { Save, ArrowLeft } from 'lucide-react';
+import PageHeader from '@/Components/UI/PageHeader';
+import { Save } from 'lucide-react';
 import ReactQuill, { Quill } from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 // @ts-ignore
@@ -22,20 +23,19 @@ if (typeof window !== 'undefined') {
 
 const modules = {
     toolbar: [
-        [{ 'header': [1, 2, 3, false] }],
+        [{ header: [1, 2, 3, false] }],
         ['bold', 'italic', 'underline', 'strike', 'blockquote'],
-        [{'list': 'ordered'}, {'list': 'bullet'}],
+        [{ list: 'ordered' }, { list: 'bullet' }],
         ['link', 'image'],
-        ['clean']
+        ['clean'],
     ],
     imageResize: {
         parchment: Quill.import('parchment'),
-        modules: ['Resize', 'DisplaySize']
-    }
+        modules: ['Resize', 'DisplaySize'],
+    },
 };
 
 export default function NoteCreate() {
-
     const { data, setData, post, processing, errors } = useForm({
         title: '',
         content: '',
@@ -47,28 +47,57 @@ export default function NoteCreate() {
     };
 
     return (
-        <AuthenticatedLayout header="Buat Catatan Baru">
+        <AuthenticatedLayout header="Catatan Baru">
             <Head title="Buat Catatan" />
-            <Link href={route('notes.index')} className="inline-flex items-center text-sm text-zinc-400 hover:text-zinc-200 mb-6">
-                <ArrowLeft className="w-4 h-4 mr-2" /> Batal
-            </Link>
 
-            <form onSubmit={submit} className="space-y-6 max-w-4xl">
+            <PageHeader
+                title="Catatan Baru"
+                description="Tulis catatan teknis atau konsep yang ingin Anda dokumentasikan."
+                actions={
+                    <Link href={route('notes.index')}>
+                        <Button variant="ghost" size="sm">Batal</Button>
+                    </Link>
+                }
+            />
+
+            <form onSubmit={submit} className="max-w-4xl space-y-5">
                 <div>
-                    <label className="block text-sm font-medium text-zinc-300 mb-1.5">Judul Catatan</label>
-                    <Input value={data.title} onChange={(e) => setData('title', e.target.value)} required />
-                    {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title}</p>}
+                    <label htmlFor="title" className="mb-1.5 block text-sm font-medium text-body">
+                        Judul
+                    </label>
+                    <Input
+                        id="title"
+                        value={data.title}
+                        onChange={(e) => setData('title', e.target.value)}
+                        placeholder="Contoh: Enumeration Nmap Dasar"
+                        required
+                    />
+                    {errors.title && <p className="mt-1.5 text-xs text-danger">{errors.title}</p>}
                 </div>
 
-                <div className="bg-white text-black rounded-lg overflow-hidden pb-12">
-                    <ReactQuill theme="snow" value={data.content} onChange={(val) => setData('content', val)} className="h-64" modules={modules} />
+                <div>
+                    <label htmlFor="content" className="mb-1.5 block text-sm font-medium text-body">
+                        Konten
+                    </label>
+                    <div className="overflow-hidden rounded-lg border border-edge bg-surface">
+                        <ReactQuill
+                            theme="snow"
+                            value={data.content}
+                            onChange={(val) => setData('content', val)}
+                            placeholder="Tulis dokumentasi di sini..."
+                            modules={modules}
+                        />
+                    </div>
+                    {errors.content && <p className="mt-1.5 text-xs text-danger">{errors.content}</p>}
                 </div>
 
-                {errors.content && <p className="text-red-500 text-xs mt-1">{errors.content}</p>}
-
-                <div className="flex justify-end pt-4 border-t border-white/10">
+                <div className="flex items-center justify-end gap-2 border-t border-edge pt-5">
+                    <Link href={route('notes.index')}>
+                        <Button type="button" variant="ghost">Batal</Button>
+                    </Link>
                     <Button type="submit" disabled={processing}>
-                        <Save className="w-4 h-4 mr-2" /> Simpan (.docx)
+                        <Save className="h-4 w-4" />
+                        {processing ? 'Menyimpan...' : 'Simpan Catatan'}
                     </Button>
                 </div>
             </form>

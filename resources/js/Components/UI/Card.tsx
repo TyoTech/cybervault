@@ -1,12 +1,16 @@
 import { HTMLAttributes, forwardRef } from 'react';
 import { cn } from '@/Utils/cn';
 
+/**
+ * Kartu flat: solid surface + border subtle + radius kecil.
+ * Dipakai hanya jika grouping benar-benar membantu.
+ */
 const Card = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
     ({ className, ...props }, ref) => (
         <div
             ref={ref}
             className={cn(
-                'rounded-xl border border-white/5 bg-zinc-900/40 backdrop-blur-sm shadow-sm',
+                'rounded-lg border border-edge bg-surface',
                 className
             )}
             {...props}
@@ -17,21 +21,25 @@ Card.displayName = 'Card';
 
 const CardHeader = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
     ({ className, ...props }, ref) => (
-        <div ref={ref} className={cn('flex flex-col space-y-1.5 p-6', className)} {...props} />
+        <div ref={ref} className={cn('flex flex-col gap-1 p-5', className)} {...props} />
     )
 );
 CardHeader.displayName = 'CardHeader';
 
-const CardTitle = forwardRef<HTMLParagraphElement, HTMLAttributes<HTMLHeadingElement>>(
+const CardTitle = forwardRef<HTMLHeadingElement, HTMLAttributes<HTMLHeadingElement>>(
     ({ className, ...props }, ref) => (
-        <h3 ref={ref} className={cn('font-semibold leading-none tracking-tight text-zinc-100', className)} {...props} />
+        <h3
+            ref={ref}
+            className={cn('text-sm font-semibold tracking-tight text-strong', className)}
+            {...props}
+        />
     )
 );
 CardTitle.displayName = 'CardTitle';
 
 const CardContent = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
     ({ className, ...props }, ref) => (
-        <div ref={ref} className={cn('p-6 pt-0 text-zinc-400', className)} {...props} />
+        <div ref={ref} className={cn('p-5 pt-0 text-muted', className)} {...props} />
     )
 );
 CardContent.displayName = 'CardContent';

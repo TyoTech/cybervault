@@ -7,9 +7,22 @@ class Note extends Model
 {
     use HasUuids;
 
+    public const KIND_NOTE = 'note';
+    public const KIND_WRITEUP = 'writeup';
+
     protected $fillable = [
-        'user_id', 'category_id', 'title', 'slug', 'content', 'source', 'path_folder'
+        'user_id', 'category_id', 'title', 'slug', 'kind', 'content',
+        'content_json', 'source', 'path_folder'
     ];
+
+    protected $casts = [
+        'content_json' => 'array',
+    ];
+
+    public function isWriteup(): bool
+    {
+        return $this->kind === self::KIND_WRITEUP;
+    }
 
     public function user() {
         return $this->belongsTo(User::class);

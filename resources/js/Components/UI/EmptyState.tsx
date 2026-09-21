@@ -9,15 +9,19 @@ interface EmptyStateProps {
     className?: string;
 }
 
+/**
+ * Empty state sederhana: icon kecil + judul + deskripsi + aksi.
+ * Tanpa ilustrasi besar / dekorasi berlebih.
+ */
 export default function EmptyState({ icon, title, description, action, className }: EmptyStateProps) {
     return (
-        <div className={cn("flex flex-col items-center justify-center p-12 text-center border border-dashed border-white/10 rounded-2xl bg-zinc-900/20", className)}>
-            <div className="w-16 h-16 bg-zinc-900 border border-white/5 rounded-2xl flex items-center justify-center mb-4 shadow-inner text-zinc-500">
+        <div className={cn('flex flex-col items-center justify-center px-6 py-14 text-center', className)}>
+            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-md border border-edge bg-surface text-faint">
                 {icon}
             </div>
-            <h3 className="text-lg font-semibold text-zinc-100 mb-1">{title}</h3>
-            <p className="text-sm text-zinc-400 max-w-md mb-6">{description}</p>
-            {action && <div>{action}</div>}
+            <h3 className="text-sm font-semibold text-strong">{title}</h3>
+            <p className="mt-1 max-w-sm text-[13px] text-faint">{description}</p>
+            {action && <div className="mt-5">{action}</div>}
         </div>
     );
 }

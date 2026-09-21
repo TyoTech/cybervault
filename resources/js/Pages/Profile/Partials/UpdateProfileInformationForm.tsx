@@ -1,10 +1,12 @@
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
-import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
+import Button from '@/Components/UI/Button';
 import { Transition } from '@headlessui/react';
 import { Link, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
+import { Save } from 'lucide-react';
+import { cn } from '@/Utils/cn';
 
 export default function UpdateProfileInformation({
     mustVerifyEmail,
@@ -17,33 +19,28 @@ export default function UpdateProfileInformation({
 }) {
     const user = usePage().props.auth.user;
 
-    const { data, setData, patch, errors, processing, recentlySuccessful } =
-        useForm({
-            name: user.name,
-            email: user.email,
-        });
+    const { data, setData, patch, errors, processing, recentlySuccessful } = useForm({
+        name: user.name,
+        email: user.email,
+    });
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-
         patch(route('profile.update'));
     };
 
     return (
-        <section className={className}>
+        <section className={cn('space-y-6', className)}>
             <header>
-                <h2 className="text-lg font-medium text-zinc-100">
-                    Profile Information
-                </h2>
-
-                <p className="mt-1 text-sm text-zinc-400">
-                    Update your account's profile information and email address.
+                <h2 className="text-base font-medium text-strong">Informasi Profil</h2>
+                <p className="mt-1 text-sm text-muted">
+                    Perbarui nama pengguna dan alamat email akun Anda.
                 </p>
             </header>
 
-            <form onSubmit={submit} className="mt-6 space-y-6">
+            <form onSubmit={submit} className="space-y-5">
                 <div>
-                    <InputLabel htmlFor="name" value="Name" />
+                    <InputLabel htmlFor="name" value="Nama" />
 
                     <TextInput
                         id="name"
@@ -75,30 +72,28 @@ export default function UpdateProfileInformation({
                 </div>
 
                 {mustVerifyEmail && user.email_verified_at === null && (
-                    <div>
-                        <p className="mt-2 text-sm text-zinc-100">
-                            Your email address is unverified.
-                            <Link
-                                href={route('verification.send')}
-                                method="post"
-                                as="button"
-                                className="rounded-md text-sm text-zinc-400 underline hover:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                            >
-                                Click here to re-send the verification email.
-                            </Link>
-                        </p>
-
+                    <div className="rounded-md border border-warning/25 bg-warning/10 px-3.5 py-3 text-sm text-warning">
+                        Alamat email belum diverifikasi.{' '}
+                        <Link
+                            href={route('verification.send')}
+                            method="post"
+                            as="button"
+                            className="underline transition-colors hover:text-warning"
+                        >
+                            Kirim ulang email verifikasi.
+                        </Link>
                         {status === 'verification-link-sent' && (
-                            <div className="mt-2 text-sm font-medium text-green-600">
-                                A new verification link has been sent to your
-                                email address.
-                            </div>
+                            <span className="mt-1 block text-xs text-success">
+                                Link verifikasi baru telah dikirim ke email Anda.
+                            </span>
                         )}
                     </div>
                 )}
 
-                <div className="flex items-center gap-4">
-                    <PrimaryButton disabled={processing}>Save</PrimaryButton>
+                <div className="flex items-center gap-3">
+                    <Button type="submit" disabled={processing}>
+                        <Save className="h-4 w-4" /> Simpan Profil
+                    </Button>
 
                     <Transition
                         show={recentlySuccessful}
@@ -107,9 +102,7 @@ export default function UpdateProfileInformation({
                         leave="transition ease-in-out"
                         leaveTo="opacity-0"
                     >
-                        <p className="text-sm text-zinc-400">
-                            Saved.
-                        </p>
+                        <p className="text-sm text-success">Tersimpan.</p>
                     </Transition>
                 </div>
             </form>

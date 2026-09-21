@@ -5,9 +5,10 @@ import { Card } from '@/Components/UI/Card';
 import Input from '@/Components/UI/Input';
 import Button from '@/Components/UI/Button';
 import Badge from '@/Components/UI/Badge';
+import PageHeader from '@/Components/UI/PageHeader';
 import EmptyState from '@/Components/UI/EmptyState';
-import { Search, Plus, ShieldAlert, Folder } from 'lucide-react';
 import Pagination from '@/Components/UI/Pagination';
+import { Search, Plus, Folder, ShieldAlert } from 'lucide-react';
 
 export default function ChallengeIndex({ challenges }: { challenges: any }) {
     const [searchQuery, setSearchQuery] = useState('');
@@ -21,59 +22,87 @@ export default function ChallengeIndex({ challenges }: { challenges: any }) {
     );
 
     return (
-        <AuthenticatedLayout header="Challenge Tracker">
+        <AuthenticatedLayout header="Challenges">
             <Head title="Challenges" />
 
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
-                <div className="relative w-full sm:w-80">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+            <PageHeader
+                title="Challenges"
+                description="Workspace writeup untuk challenge dan lab."
+                actions={
+                    <Link href={route('challenges.create')}>
+                        <Button size="sm">
+                            <Plus className="h-4 w-4" /> Writeup Baru
+                        </Button>
+                    </Link>
+                }
+            />
+
+            <div className="max-w-sm">
+                <div className="relative">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-faint" aria-hidden="true" />
                     <Input
-                        placeholder="Cari judul challenge..."
+                        placeholder="Cari judul writeup..."
                         className="pl-9"
                         value={searchQuery}
                         onChange={(e: any) => setSearchQuery(e.target.value)}
+                        aria-label="Cari writeup"
                     />
                 </div>
-                <Link href={route('challenges.create')}>
-                    <Button><Plus className="w-4 h-4 mr-2" /> Add Challenge</Button>
-                </Link>
             </div>
 
-            <Card className="overflow-hidden border-white/5 bg-zinc-950">
-                {filteredChallenges.length === 0 ? (
+            {filteredChallenges.length === 0 ? (
+                <Card>
                     <EmptyState
-                        icon={<ShieldAlert className="w-8 h-8 text-zinc-500" />}
-                        title="Tracker Kosong"
-                        description="Belum ada challenge yang Anda simpan."
+                        icon={<ShieldAlert className="h-4 w-4" />}
+                        title={searchQuery ? 'Tidak ada hasil' : 'Workspace kosong'}
+                        description={
+                            searchQuery
+                                ? `Tidak ada writeup yang cocok dengan "${searchQuery}".`
+                                : 'Belum ada writeup. Buat workspace terstruktur untuk menganalisis challenge.'
+                        }
+                        action={
+                            !searchQuery && (
+                                <Link href={route('challenges.create')}>
+                                    <Button size="sm">
+                                        <Plus className="h-4 w-4" /> Writeup Baru
+                                    </Button>
+                                </Link>
+                            )
+                        }
                     />
-                ) : (
-                    <div className="divide-y divide-white/5">
+                </Card>
+            ) : (
+                <Card className="overflow-hidden">
+                    <ul className="divide-y divide-edge">
                         {filteredChallenges.map((challenge: any) => (
-                            <div key={challenge.id} className="flex items-center justify-between p-4 hover:bg-white/5 transition-colors group">
-                                <div className="flex items-center gap-4">
-                                    <Folder className="w-5 h-5 text-blue-500" />
-                                    <div>
-                                        <Link href={route('challenges.show', challenge.id)}>
-                                            <h4 className="text-zinc-100 font-medium group-hover:text-blue-400 transition-colors">
-                                                {challenge.judul}
-                                            </h4>
+                            <li
+                                key={challenge.id}
+                                className="flex items-center justify-between gap-3 px-4 py-3.5 transition-colors hover:bg-elevated/60"
+                            >
+                                <div className="flex min-w-0 items-center gap-3">
+                                    <Folder className="h-4 w-4 shrink-0 text-muted" aria-hidden="true" />
+                                    <div className="min-w-0">
+                                        <Link
+                                            href={route('challenges.show', challenge.id)}
+                                            className="block truncate text-sm font-medium text-strong transition-colors hover:text-accent"
+                                        >
+                                            {challenge.judul}
                                         </Link>
-                                        <div className="flex items-center gap-2 mt-1 text-xs text-zinc-500 font-mono">
-                                            <span>{challenge.path_folder}</span>
-                                        </div>
+                                        <p className="mt-0.5 truncate font-mono text-xs text-faint">
+                                            {challenge.path_folder}
+                                        </p>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-3">
+                                <div className="flex shrink-0 items-center gap-2">
                                     <Badge variant="outline">{challenge.kategori}</Badge>
-                                    <Badge variant="outline" className="border-blue-500/30 text-blue-400">{challenge.lab}</Badge>
+                                    <Badge variant="outline">{challenge.lab}</Badge>
                                 </div>
-                            </div>
+                            </li>
                         ))}
-                    </div>
-                )}
-            </Card>
+                    </ul>
+                </Card>
+            )}
 
-            {/* Tampilkan paginasi jika ada links dari controller */}
             {challenges.links && <Pagination links={challenges.links} />}
         </AuthenticatedLayout>
     );

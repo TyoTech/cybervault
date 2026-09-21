@@ -1,4 +1,5 @@
-import PrimaryButton from '@/Components/PrimaryButton';
+import Button from '@/Components/UI/Button';
+import { Card, CardContent } from '@/Components/UI/Card';
 import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
@@ -14,38 +15,38 @@ export default function VerifyEmail({ status }: { status?: string }) {
 
     return (
         <GuestLayout>
-            <Head title="Email Verification" />
+            <Head title="Verifikasi Email" />
 
-            <div className="mb-4 text-sm text-gray-600">
-                Thanks for signing up! Before getting started, could you verify
-                your email address by clicking on the link we just emailed to
-                you? If you didn't receive the email, we will gladly send you
-                another.
-            </div>
+            <Card>
+                <CardContent className="pt-5">
+                    <div className="mb-4 text-sm text-muted">
+                        Terima kasih telah mendaftar! Sebelum mulai, verifikasi alamat email Anda
+                        dengan mengklik link yang kami kirimkan. Jika Anda tidak menerimanya, kami
+                        akan dengan senang hati mengirimkannya lagi.
+                    </div>
 
-            {status === 'verification-link-sent' && (
-                <div className="mb-4 text-sm font-medium text-green-600">
-                    A new verification link has been sent to the email address
-                    you provided during registration.
-                </div>
-            )}
+                    {status === 'verification-link-sent' && (
+                        <div className="mb-4 rounded-md border border-success/25 bg-success/10 px-3.5 py-3 text-sm text-success">
+                            Link verifikasi baru telah dikirim ke email yang Anda daftarkan.
+                        </div>
+                    )}
 
-            <form onSubmit={submit}>
-                <div className="mt-4 flex items-center justify-between">
-                    <PrimaryButton disabled={processing}>
-                        Resend Verification Email
-                    </PrimaryButton>
+                    <form onSubmit={submit} className="mt-4 flex items-center justify-between gap-3">
+                        <Button disabled={processing}>
+                            {processing ? 'Mengirim...' : 'Kirim Ulang Email Verifikasi'}
+                        </Button>
 
-                    <Link
-                        href={route('logout')}
-                        method="post"
-                        as="button"
-                        className="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                    >
-                        Log Out
-                    </Link>
-                </div>
-            </form>
+                        <Link
+                            href={route('logout')}
+                            method="post"
+                            as="button"
+                            className="text-sm text-muted underline transition-colors hover:text-strong"
+                        >
+                            Keluar
+                        </Link>
+                    </form>
+                </CardContent>
+            </Card>
         </GuestLayout>
     );
 }

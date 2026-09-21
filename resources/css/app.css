@@ -1,33 +1,326 @@
 @import "tailwindcss";
 
+@plugin "@tailwindcss/typography";
+
+/* Dark mode berbasis class: `.dark` dipasang di <html> oleh script kecil
+   di app.blade.php (anti-FOUC) dan oleh ThemeSetting (persistensi). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ─────────────────────────────────────────────────────────────
+   Cyber Vault — design tokens (Tailwind v4)
+   Bahasa visual: solid, tenang, teknis. Bukan "AI dashboard".
+
+   Nilai asli didefinisikan per tema sebagai CSS variable di bawah
+   (`--cv-*`), lalu `@theme` memetakannya ke utility semantic:
+   bg-canvas, bg-surface, bg-elevated, border-edge, text-strong,
+   text-body, text-muted, text-faint, text-accent, dst.
+
+   Semua warna aplikasi melewati token ini — tidak ada warnr
+   hardcoded di komponen.
+   ───────────────────────────────────────────────────────────── */
+@theme {
+    --color-canvas: var(--cv-canvas);
+    --color-surface: var(--cv-surface);
+    --color-elevated: var(--cv-elevated);
+    --color-edge: var(--cv-edge);
+    --color-edge-strong: var(--cv-edge-strong);
+
+    --color-strong: var(--cv-strong);
+    --color-body: var(--cv-body);
+    --color-muted: var(--cv-muted);
+    --color-faint: var(--cv-faint);
+
+    --color-accent: var(--cv-accent);
+    --color-accent-hover: var(--cv-accent-hover);
+    --color-success: var(--cv-success);
+    --color-warning: var(--cv-warning);
+    --color-danger: var(--cv-danger);
+
+    /* Permukaan kode/terminal: SELALU gelap di kedua tema (seperti terminal) */
+    --color-code-bg: var(--cv-code-bg);
+    --color-code-text: var(--cv-code-text);
+}
+
+/* ─── Tema TERANG (default) ─── */
+:root {
+    --cv-canvas: #f5f6f8;
+    --cv-surface: #ffffff;
+    --cv-elevated: #eef0f3;
+    --cv-edge: #d9dce1;
+    --cv-edge-strong: #b8bdc6;
+
+    --cv-strong: #191b20;
+    --cv-body: #363b43;
+    --cv-muted: #5d6470;
+    --cv-faint: #878e99;
+
+    --cv-accent: #2563eb;
+    --cv-accent-hover: #1d4ed8;
+    --cv-success: #15803d;
+    --cv-warning: #b45309;
+    --cv-danger: #dc2626;
+
+    /* teks kode (prose + quill) */
+    --p-pre-bg: #f4f5f7;
+    --p-pre-code: #39414d;
+
+    /* terminal / blok kode — tetap gelap walau tema terang */
+    --cv-code-bg: #0d0e10;
+    --cv-code-text: #d4d4d8;
+
+    color-scheme: light;
+}
+
+/* ─── Tema GELAP ─── */
+.dark {
+    --cv-canvas: #0b0c0e;
+    --cv-surface: #141518;
+    --cv-elevated: #1d1f24;
+    --cv-edge: #26282e;
+    --cv-edge-strong: #34373e;
+
+    --cv-strong: #f2f2f4;
+    --cv-body: #c9cbd1;
+    --cv-muted: #a1a1aa;
+    --cv-faint: #81848c;
+
+    --cv-accent: #3b82f6;
+    --cv-accent-hover: #60a5fa;
+    --cv-success: #4ade80;
+    --cv-warning: #fbbf24;
+    --cv-danger: #f87171;
+
+    --p-pre-bg: #0d0e10;
+    --p-pre-code: #d4d4d8;
+
+    /* terminal / blok kode — tetap gelap (sama dengan tema terang) */
+    --cv-code-bg: #0d0e10;
+    --cv-code-text: #d4d4d8;
+
+    color-scheme: dark;
+}
+
 @layer base {
-    :root {
-        color-scheme: dark;
-    }
-
     body {
-        /* Menggunakan warna background yang sangat gelap (hitam keabu-abuan) */
-        @apply bg-[#0a0a0a] text-zinc-300 font-sans antialiased selection:bg-blue-500/30 selection:text-blue-200;
+        @apply bg-canvas text-body font-sans antialiased selection:bg-accent/30 selection:text-strong;
+        font-size: 0.9375rem; /* 15px — nyaman dibaca untuk aplikasi pekerjaan */
     }
 
-    /* Kustomisasi scrollbar agar terlihat modern dan tipis */
+    /* Accessibility: focus ring global untuk keyboard. Elemen yang sudah
+       punya focus-visible ring dari utility Tailwind override lewat cascade. */
+    :focus-visible {
+        outline: 2px solid var(--cv-accent);
+        outline-offset: 2px;
+    }
+
+    /* Kurangi animasi/pergerakan bagi user dengan preferensi reduced-motion. */
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+            scroll-behavior: auto !important;
+        }
+    }
+
+    /* Scrollbar tipis & netral, mengikuti tema */
+    :root {
+        --scroll-thumb: #c2c7cf;
+        --scroll-thumb-hover: #a7aeb9;
+    }
+    .dark {
+        --scroll-thumb: #2a2c31;
+        --scroll-thumb-hover: #3a3d44;
+    }
     ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
+        width: 10px;
+        height: 10px;
     }
     ::-webkit-scrollbar-track {
-        @apply bg-transparent;
+        background: transparent;
     }
     ::-webkit-scrollbar-thumb {
-        @apply bg-zinc-800 rounded-full hover:bg-zinc-700 transition-colors;
+        background: var(--scroll-thumb);
+        border-radius: 8px;
+        border: 2px solid transparent;
+        background-clip: padding-box;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background-color: var(--scroll-thumb-hover);
+    }
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: var(--scroll-thumb) transparent;
     }
 
-    /* Kustomisasi Quill Editor untuk mode gelap */
-    .ql-toolbar, .ql-container { border-color: #3f3f46 !important; }
-    .ql-toolbar { background-color: #18181b; border-top-left-radius: 0.5rem; border-top-right-radius: 0.5rem; }
-    .ql-toolbar .ql-stroke { stroke: #d4d4d8 !important; }
-    .ql-toolbar .ql-fill { fill: #d4d4d8 !important; }
-    .ql-toolbar .ql-picker { color: #d4d4d8 !important; }
-    .ql-editor { background-color: #09090b; color: #e4e4e7; min-height: 400px; border-bottom-left-radius: 0.5rem; border-bottom-right-radius: 0.5rem; }
-    .ql-editor img { cursor: nwse-resize; }
+    /* Monospace hanya untuk konten teknis, bukan seluruh UI */
+    code, kbd, samp, pre {
+        @apply font-mono;
+    }
+}
+
+@layer components {
+    /* ─────────────────────────────────────────────────────────────
+       Markdown / Writeup — dokumen teknis yang menyesuaikan tema.
+       Nilai `--tw-prose-*` diambil dari variable per tema.
+       ───────────────────────────────────────────────────────────── */
+    :root {
+        --p-body: #363b43;
+        --p-headings: #191b20;
+        --p-links: #2563eb;
+        --p-bold: #191b20;
+        --p-counters: #878e99;
+        --p-bullets: #9aa1ac;
+        --p-hr: #d9dce1;
+        --p-quotes: #363b43;
+        --p-quote-borders: #b8bdc6;
+        --p-captions: #878e99;
+        --p-code: #be185d;
+        --p-th-borders: #b8bdc6;
+        --p-td-borders: #d9dce1;
+    }
+    .dark {
+        --p-body: #c9cbd1;
+        --p-headings: #e8e8ea;
+        --p-links: #7cb0f7;
+        --p-bold: #e8e8ea;
+        --p-counters: #81848c;
+        --p-bullets: #4b4e55;
+        --p-hr: #26282e;
+        --p-quotes: #c9cbd1;
+        --p-quote-borders: #34373e;
+        --p-captions: #81848c;
+        --p-code: #d8a9f0;
+        --p-th-borders: #34373e;
+        --p-td-borders: #26282e;
+    }
+
+    .prose {
+        --tw-prose-body: var(--p-body);
+        --tw-prose-headings: var(--p-headings);
+        --tw-prose-lead: var(--p-muted, var(--p-body));
+        --tw-prose-links: var(--p-links);
+        --tw-prose-bold: var(--p-bold);
+        --tw-prose-counters: var(--p-counters);
+        --tw-prose-bullets: var(--p-bullets);
+        --tw-prose-hr: var(--p-hr);
+        --tw-prose-quotes: var(--p-quotes);
+        --tw-prose-quote-borders: var(--p-quote-borders);
+        --tw-prose-captions: var(--p-captions);
+        --tw-prose-code: var(--p-code);
+        --tw-prose-pre-code: var(--p-pre-code);
+        --tw-prose-pre-bg: var(--p-pre-bg);
+        --tw-prose-th-borders: var(--p-th-borders);
+        --tw-prose-td-borders: var(--p-td-borders);
+
+        max-width: none;
+        font-size: 0.9375rem;
+        line-height: 1.7;
+    }
+
+    .prose :is(h1, h2, h3, h4) {
+        @apply font-semibold tracking-tight;
+    }
+    .prose h1 {
+        font-size: 1.375rem;
+        margin-top: 2rem;
+        margin-bottom: 0.875rem;
+    }
+    .prose h2 {
+        font-size: 1.1875rem;
+        margin-top: 1.75rem;
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 1px solid var(--p-hr);
+    }
+    .prose h3 {
+        font-size: 1.0625rem;
+        margin-top: 1.5rem;
+        margin-bottom: 0.625rem;
+    }
+    .prose p {
+        margin-top: 0.875rem;
+        margin-bottom: 0.875rem;
+    }
+    .prose code:not(pre code) {
+        @apply rounded bg-elevated px-1.5 py-0.5 text-[0.85em] text-accent;
+        font-weight: 500;
+    }
+    .prose pre {
+        @apply rounded-lg border border-edge p-4 text-[13px] leading-relaxed;
+        overflow-x: auto;
+    }
+    .prose :is(ul, ol) {
+        padding-inline-start: 1.25rem;
+    }
+    .prose img {
+        @apply rounded-lg border border-edge;
+    }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Quill Editor (Notes) — mengikuti tema lewat token semantic
+   ───────────────────────────────────────────────────────────── */
+.ql-toolbar,
+.ql-container {
+    border-color: var(--cv-edge) !important;
+}
+.ql-toolbar {
+    background-color: var(--cv-surface);
+    border-top-left-radius: 0.375rem;
+    border-top-right-radius: 0.375rem;
+}
+.ql-toolbar .ql-stroke {
+    stroke: var(--cv-muted) !important;
+}
+.ql-toolbar .ql-fill {
+    fill: var(--cv-muted) !important;
+}
+.ql-toolbar .ql-picker {
+    color: var(--cv-muted) !important;
+}
+.ql-toolbar button:hover .ql-stroke,
+.ql-toolbar button.ql-active .ql-stroke {
+    stroke: var(--cv-accent-hover) !important;
+}
+.ql-toolbar button:hover .ql-fill,
+.ql-toolbar button.ql-active .ql-fill {
+    fill: var(--cv-accent-hover) !important;
+}
+.ql-toolbar .ql-picker.ql-expanded .ql-picker-options {
+    background-color: var(--cv-elevated);
+    border-color: var(--cv-edge-strong) !important;
+    color: var(--cv-strong);
+}
+.ql-container {
+    border-bottom-left-radius: 0.375rem;
+    border-bottom-right-radius: 0.375rem;
+    font-size: 0.9375rem;
+}
+.ql-editor {
+    background-color: transparent;
+    color: var(--cv-body);
+    min-height: 400px;
+    line-height: 1.7;
+}
+.ql-editor.ql-blank::before {
+    color: var(--cv-faint);
+    font-style: normal;
+}
+.ql-editor img {
+    cursor: nwse-resize;
+}
+.ql-editor pre.ql-syntax {
+    background-color: var(--cv-code-bg);
+    border: 1px solid var(--cv-edge);
+    border-radius: 0.375rem;
+    color: var(--cv-code-text);
+}
+
+.ql-snow .ql-editor h1,
+.ql-snow .ql-editor h2,
+.ql-snow .ql-editor h3 {
+    color: var(--cv-strong);
 }

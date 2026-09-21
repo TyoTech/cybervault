@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Search, Book, Terminal, Shield, Wrench } from 'lucide-react';
+import { Search, Book, Shield, Terminal, Wrench, Loader2 } from 'lucide-react';
 import { router } from '@inertiajs/react';
 import axios from 'axios';
 
@@ -20,7 +20,7 @@ export default function CommandPalette() {
         const handleKeyDown = (e: KeyboardEvent) => {
             if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
                 e.preventDefault();
-                setIsOpen(prev => !prev);
+                setIsOpen((prev) => !prev);
             }
             if (e.key === 'Escape') setIsOpen(false);
         };
@@ -59,42 +59,56 @@ export default function CommandPalette() {
 
     const getIcon = (type: string) => {
         switch (type) {
-            case 'note': return <Book className="w-4 h-4 mr-3 text-zinc-500 group-hover:text-blue-500" />;
-            case 'challenge': return <Shield className="w-4 h-4 mr-3 text-zinc-500 group-hover:text-emerald-500" />;
-            case 'payload': return <Terminal className="w-4 h-4 mr-3 text-zinc-500 group-hover:text-purple-500" />;
-            case 'tool': return <Wrench className="w-4 h-4 mr-3 text-zinc-500 group-hover:text-orange-500" />;
-            default: return <Search className="w-4 h-4 mr-3" />;
+            case 'note':
+                return <Book className="h-4 w-4 text-faint" />;
+            case 'challenge':
+                return <Shield className="h-4 w-4 text-faint" />;
+            case 'payload':
+                return <Terminal className="h-4 w-4 text-faint" />;
+            case 'tool':
+                return <Wrench className="h-4 w-4 text-faint" />;
+            default:
+                return <Search className="h-4 w-4" />;
         }
     };
 
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-start justify-center pt-24 sm:pt-32 px-4">
-            <div className="fixed inset-0 bg-[#0a0a0a]/80 backdrop-blur-sm" onClick={() => setIsOpen(false)} />
+        <div className="fixed inset-0 z-50 flex items-start justify-center px-4 pt-24 sm:pt-32">
+            <div className="fixed inset-0 bg-black/60" onClick={() => setIsOpen(false)} />
 
-            <div className="relative w-full max-w-xl bg-zinc-950 border border-white/10 rounded-xl shadow-2xl overflow-hidden flex flex-col">
-                <div className="flex items-center px-4 py-4 border-b border-white/5">
-                    <Search className="w-5 h-5 text-blue-500 mr-3 shrink-0" />
+            <div className="relative w-full max-w-xl overflow-hidden rounded-lg border border-edge bg-elevated shadow-2xl">
+                <div className="flex items-center border-b border-edge px-4">
+                    <Search className="mr-3 h-4 w-4 shrink-0 text-faint" />
                     <input
                         ref={inputRef}
                         type="text"
                         placeholder="Cari notes, payload, tools..."
-                        className="flex-1 bg-transparent border-none text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-0 text-base"
+                        className="h-12 w-full bg-transparent text-sm text-strong placeholder:text-muted focus:outline-none"
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                     />
+                    <kbd className="rounded border border-edge bg-surface px-1.5 py-0.5 font-mono text-[10px] text-faint">
+                        ESC
+                    </kbd>
                 </div>
 
-                <div className="max-h-[60vh] overflow-y-auto p-2">
+                <div className="max-h-[60vh] overflow-y-auto p-1.5">
                     {loading ? (
-                        <div className="px-4 py-8 text-center text-sm text-zinc-500">Mencari...</div>
+                        <div className="flex items-center justify-center gap-2 px-4 py-8 text-sm text-faint">
+                            <Loader2 className="h-4 w-4 animate-spin" /> Mencari...
+                        </div>
                     ) : query === '' ? (
-                        <div className="px-4 py-8 text-center text-sm text-zinc-500">Ketik untuk mencari.</div>
+                        <p className="px-4 py-8 text-center text-sm text-faint">
+                            Ketik untuk mencari catatan, writeup, payload, atau tool.
+                        </p>
                     ) : results.length === 0 ? (
-                        <div className="px-4 py-8 text-center text-sm text-zinc-500">Tidak ada hasil untuk "{query}"</div>
+                        <p className="px-4 py-8 text-center text-sm text-faint">
+                            Tidak ada hasil untuk &ldquo;{query}&rdquo;
+                        </p>
                     ) : (
-                        <div className="space-y-1">
+                        <div className="space-y-0.5">
                             {results.map((item, index) => (
                                 <button
                                     key={index}
@@ -102,10 +116,10 @@ export default function CommandPalette() {
                                         setIsOpen(false);
                                         router.visit(item.url);
                                     }}
-                                    className="w-full flex items-center px-3 py-3 text-sm rounded-lg hover:bg-white/5 text-zinc-300 transition-colors group text-left"
+                                    className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm text-body transition-colors hover:bg-surface hover:text-strong"
                                 >
                                     {getIcon(item.type)}
-                                    {item.title}
+                                    <span className="truncate">{item.title}</span>
                                 </button>
                             ))}
                         </div>

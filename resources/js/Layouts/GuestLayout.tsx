@@ -4,17 +4,18 @@ import { Link } from '@inertiajs/react';
 
 export default function Guest({ children }: PropsWithChildren) {
     return (
-        <div className="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-[#0a0a0a] relative overflow-hidden">
-            {/* Ambient background glow */}
-            <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-96 h-96 bg-blue-600/10 rounded-full blur-[120px] pointer-events-none" />
-
-            <div className="relative z-10 w-full sm:max-w-md mt-6 px-6 py-4">
-                <div className="flex justify-center mb-8">
+        <div className="flex min-h-screen flex-col items-center justify-center bg-canvas px-4 py-10">
+            <div className="w-full max-w-md">
+                <div className="mb-8 flex flex-col items-center gap-3">
                     <Link href="/">
-                        <div className="h-14 w-14 rounded-2xl bg-zinc-900 border border-white/5 flex items-center justify-center shadow-lg shadow-black/50 group transition-all hover:border-white/10 hover:shadow-blue-500/10">
-                            <Shield className="w-7 h-7 text-blue-500 group-hover:scale-110 transition-transform duration-300" />
-                        </div>
+                        <span className="flex h-12 w-12 items-center justify-center rounded-lg border border-edge bg-surface">
+                            <Shield className="h-6 w-6 text-accent" aria-hidden="true" />
+                        </span>
                     </Link>
+                    <div className="text-center leading-tight">
+                        <p className="text-base font-semibold tracking-tight text-strong">Cyber Vault</p>
+                        <p className="mt-0.5 text-xs text-faint">Personal Security Workspace</p>
+                    </div>
                 </div>
                 {children}
             </div>

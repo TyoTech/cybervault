@@ -1,6 +1,6 @@
 import Badge from '@/Components/UI/Badge';
 import { cn } from '@/Utils/cn';
-import { EvidenceKind, ExperimentStatus, HypothesisStatus, StepType } from '@/Components/Writeup/types';
+import { EvidenceKind, ExperimentStatus, HypothesisStatus, QuestionStatus, StepType } from '@/Components/Writeup/types';
 
 export type BadgeTone = 'success' | 'warning' | 'info' | 'purple' | 'danger' | 'neutral';
 
@@ -66,6 +66,17 @@ export function evidenceKindTone(kind: EvidenceKind): BadgeTone {
     }
 }
 
+export function questionStatusTone(status: QuestionStatus): BadgeTone {
+    switch (status) {
+        case 'solved':
+            return 'success';
+        case 'in_progress':
+            return 'warning';
+        default:
+            return 'neutral';
+    }
+}
+
 const LABEL: Record<string, string> = {
     hypothesis: 'HYPOTHESIS',
     verified: 'VERIFIED',
@@ -82,6 +93,10 @@ const LABEL: Record<string, string> = {
     response: 'RESP',
     error: 'ERROR',
     log: 'LOG',
+    lainya: 'LAINYA',
+    unsolved: 'UNSOLVED',
+    in_progress: 'IN PROGRESS',
+    solved: 'SOLVED',
 };
 
 /**

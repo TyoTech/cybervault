@@ -10,7 +10,11 @@ import AiAssistPanel from '@/Components/Writeup/AiAssistPanel';
 import { emptyWriteup, WriteupData } from '@/Components/Writeup/types';
 import { Save } from 'lucide-react';
 
-export default function ChallengeCreate() {
+interface Props {
+    referenceOptions?: { id: number; title: string; lab: string; kategori: string }[];
+}
+
+export default function ChallengeCreate({ referenceOptions = [] }: Props) {
     const { data, setData, post, processing, errors } = useForm({
         lab: '',
         kategori: '',
@@ -66,6 +70,7 @@ export default function ChallengeCreate() {
                 <AiAssistPanel
                     title={data.judul}
                     writeup={data.writeup}
+                    references={referenceOptions}
                     onApply={(next) => setData('writeup', next)}
                 />
 

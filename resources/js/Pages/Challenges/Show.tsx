@@ -5,7 +5,15 @@ import Button from '@/Components/UI/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/Components/UI/Card';
 import WriteupView from '@/Components/Writeup/WriteupView';
 import { writeupFromRaw, WriteupData } from '@/Components/Writeup/types';
-import { ArrowLeft, Trash2, Edit, FolderOpen, FileText } from 'lucide-react';
+import { ArrowLeft, Trash2, Edit, FolderOpen, FileText, FileDown } from 'lucide-react';
+
+const EXPORT_FORMATS = [
+    ['json', 'JSON'],
+    ['md', 'Markdown'],
+    ['txt', 'TXT'],
+    ['docx', 'DOCX'],
+    ['pdf', 'PDF'],
+] as const;
 
 export default function ChallengeShow({ challenge }: { challenge: any }) {
     const { delete: destroy, processing } = useForm();
@@ -46,6 +54,24 @@ export default function ChallengeShow({ challenge }: { challenge: any }) {
                     <Button variant="danger" size="sm" onClick={handleDelete} disabled={processing}>
                         <Trash2 className="h-4 w-4" /> Hapus
                     </Button>
+                </div>
+            </div>
+
+            {/* Export on-demand (read-only — tidak mengubah writeup.json) */}
+            <div className="rounded-lg border border-edge bg-surface px-4 py-3">
+                <div className="flex flex-wrap items-center gap-2">
+                    <span className="mr-1 inline-flex items-center gap-1.5 text-[13px] text-faint">
+                        <FileDown className="h-4 w-4" aria-hidden="true" /> Export:
+                    </span>
+                    {EXPORT_FORMATS.map(([format, label]) => (
+                        <Link
+                            key={format}
+                            href={route('challenges.export', { challenge: challenge.id, format })}
+                            className="rounded-md border border-edge px-3 py-1.5 text-[13px] text-muted transition-colors hover:bg-surface-hover hover:text-body"
+                        >
+                            {label}
+                        </Link>
+                    ))}
                 </div>
             </div>
 

@@ -1,12 +1,17 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import Button from '@/Components/UI/Button';
 import { writeupFromRaw, WriteupData } from '@/Components/Writeup/types';
+import ReferencePicker from '@/Components/Writeup/ReferencePicker';
+import { pruneMissingSelection, ReferenceOption } from '@/Components/Writeup/referencePicker';
+import { aiAssistMessage } from '@/Utils/aiAssistMessage';
 import { Sparkles, Check, X, Loader2, AlertTriangle } from 'lucide-react';
 
 interface Props {
     title: string;
     writeup: WriteupData;
+    references?: ReferenceOption[];
+    currentChallengeId?: number;
     onApply: (next: WriteupData) => void;
 }
 
@@ -65,11 +70,36 @@ function summarize(writeup: WriteupData): string[] {
     return [...new Set(paths.filter(Boolean))];
 }
 
-export default function AiAssistPanel({ title, writeup, onApply }: Props) {
+export default function AiAssistPanel({
+    title,
+    writeup,
+    references = [],
+    currentChallengeId,
+    onApply,
+}: Props) {
     const [loading, setLoading] = useState(false);
     const [preview, setPreview] = useState<WriteupData | null>(null);
     const [warnings, setWarnings] = useState<string[]>([]);
     const [error, setError] = useState('');
+    const [selectedReferenceIds, setSelectedReferenceIds] = useState<number[]>([]);
+
+    // Challenge aktif tidak pernah bisa menjadi reference dirinya sendiri.
+    const availableReferences = useMemo(
+        () =>
+            currentChallengeId === undefined
+                ? references
+                : references.filter((reference) => reference.id !== currentChallengeId),
+        [references, currentChallengeId],
+    );
+
+    // Bersihkan pilihan yang tidak lagi tersedia (mis. reference dihapus
+    // atau challenge aktif berubah) tanpa kehilangan pilihan valid lainnya.
+    useEffect(() => {
+        setSelectedReferenceIds((current) => {
+            const pruned = pruneMissingSelection(current, availableReferences);
+            return pruned.length === current.length ? current : pruned;
+        });
+    }, [availableReferences]);
 
     const run = async () => {
         setLoading(true);
@@ -81,21 +111,15 @@ export default function AiAssistPanel({ title, writeup, onApply }: Props) {
             const response = await axios.post(route('challenges.ai.assist'), {
                 title,
                 writeup,
+                current_challenge_id: currentChallengeId,
+                reference_ids: selectedReferenceIds.slice(0, 5),
             });
 
             const next = writeupFromRaw(response.data?.writeup);
             setPreview(next);
             setWarnings(Array.isArray(response.data?.warnings) ? response.data.warnings : []);
-        } catch (e: any) {
-            console.error('[AI ASSIST ERROR]', e);
-
-            const message =
-                e?.response?.data?.message ||
-                e?.response?.data?.error ||
-                e?.message ||
-                'AI tidak dapat memproses writeup saat ini.';
-
-            setError(message);
+        } catch (e: unknown) {
+            setError(aiAssistMessage(e));
         } finally {
             setLoading(false);
         }
@@ -128,6 +152,15 @@ export default function AiAssistPanel({ title, writeup, onApply }: Props) {
                     {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                     {loading ? 'Memproses…' : 'Isi dengan AI'}
                 </Button>
+            </div>
+
+            <div className="mt-4 rounded-md border border-edge bg-surface p-3">
+                <ReferencePicker
+                    references={availableReferences}
+                    selectedIds={selectedReferenceIds}
+                    onChange={setSelectedReferenceIds}
+                    disabled={loading}
+                />
             </div>
 
             {error && (

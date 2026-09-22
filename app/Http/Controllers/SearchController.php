@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Note;
 use App\Models\Challenge;
 use App\Models\Tool;
+use App\Services\ChallengeWriteupService;
 
 class SearchController extends Controller
 {
@@ -31,12 +32,40 @@ class SearchController extends Controller
             ]);
 
         // Tabel challenges memakai kolom `judul` (bukan `title`).
-        $challenges = Challenge::where('user_id', $userId)
+        $challengeItems = Challenge::where('user_id', $userId)
             ->whereRaw('LOWER(judul) LIKE LOWER(?)', [$needle])
             ->take(5)
+            ->get();
+
+        $challenges = $challengeItems->map(fn ($item) => [
+            'type' => 'challenge', 'title' => $item->judul, 'url' => route('challenges.show', $item->id)
+        ]);
+
+        // Cari juga di Question/Objective (unit pekerjaan) di dalam writeup.json.
+        // Batasi scan ke challenge terbaru agar tetap ringan; hasil diberi tipe
+        // khusus supaya user tahu ini cocok lewat question-nya, bukan judul.
+        $matchedIds = $challengeItems->pluck('id');
+
+        $questionMatches = Challenge::where('user_id', $userId)
+            ->whereNotIn('id', $matchedIds)
+            ->latest()
+            ->limit(30)
             ->get()
+            ->filter(function (Challenge $item) use ($query) {
+                $data = app(ChallengeWriteupService::class)->read($item);
+                foreach ($data['questions'] as $q) {
+                    if (mb_stripos($q['question'], $query) !== false
+                        || mb_stripos($q['notes'], $query) !== false) {
+                        return true;
+                    }
+                }
+                return false;
+            })
+            ->take(5)
             ->map(fn ($item) => [
-                'type' => 'challenge', 'title' => $item->judul, 'url' => route('challenges.show', $item->id)
+                'type' => 'challenge-question',
+                'title' => $item->judul . ' — Question/Objective',
+                'url' => route('challenges.show', $item->id),
             ]);
 
         // Source of truth payload adalah file teks di disk cyber (dikelola PayloadController),
@@ -57,7 +86,7 @@ class SearchController extends Controller
                 'type' => 'tool', 'title' => $item->name, 'url' => route('tools.edit', $item->id)
             ]);
 
-        $results = collect([])->merge($notes)->merge($challenges)->merge($payloads)->merge($tools);
+        $results = collect([])->merge($notes)->merge($challenges)->merge($questionMatches)->merge($payloads)->merge($tools);
 
         return response()->json($results->values());
     }

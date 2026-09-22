@@ -210,4 +210,103 @@ class ChallengeWriteupTest extends TestCase
 
         $this->assertStringContainsString('Risk sedang', $page['props']['challenge']['writeup_markdown']);
     }
+
+    public function test_store_rejects_path_traversal_in_folder_segments(): void
+    {
+        $response = $this->actingAs($this->user)
+            ->post(route('challenges.store'), [
+                'lab' => '../..',
+                'kategori' => 'Web',
+                'judul' => 'X',
+                'writeup' => [],
+            ]);
+
+        $response->assertSessionHasErrors('lab');
+
+        // Tidak ada row challenge yang dibuat dari input traversal.
+        $this->assertCount(0, Challenge::all());
+    }
+
+    public function test_store_rejects_backslash_or_slash_in_segments(): void
+    {
+        $this->actingAs($this->user)
+            ->post(route('challenges.store'), [
+                'lab' => 'a/b',
+                'kategori' => 'Web',
+                'judul' => 'X',
+                'writeup' => [],
+            ])
+            ->assertSessionHasErrors('lab');
+
+        $this->actingAs($this->user)
+            ->post(route('challenges.store'), [
+                'lab' => 'Lab',
+                'kategori' => 'C:\\evil',
+                'judul' => 'X',
+                'writeup' => [],
+            ])
+            ->assertSessionHasErrors('kategori');
+
+        $this->assertCount(0, Challenge::all());
+    }
+
+    public function test_update_rejects_path_traversal_renaming(): void
+    {
+        $challenge = $this->storeWriteup(['notes' => 'asli']);
+
+        $this->actingAs($this->user)
+            ->put(route('challenges.update', $challenge), [
+                'lab' => 'LabBaru',
+                'kategori' => 'Web',
+                'judul' => '../evil',
+                'writeup' => [],
+            ])
+            ->assertSessionHasErrors('judul');
+
+        $challenge->refresh();
+        $this->assertSame('LabT', $challenge->lab);
+        $this->assertStringContainsString('LabT', $challenge->path_folder);
+    }
+
+    public function test_check_title_endpoint_rejects_traversal(): void
+    {
+        $this->actingAs($this->user)
+            ->postJson(route('api.title.check'), [
+                'lab' => '..',
+                'kategori' => '..',
+                'judul' => 'x',
+            ])
+            ->assertStatus(422);
+    }
+
+    public function test_categories_endpoint_rejects_traversal(): void
+    {
+        // "%2E%2E" ter-decode menjadi ".." oleh router — harus ditolak 422.
+        $this->actingAs($this->user)
+            ->getJson(route('api.categories', ['lab' => '%2E%2E']))
+            ->assertStatus(422);
+    }
+
+    public function test_check_category_endpoint_rejects_traversal(): void
+    {
+        $this->actingAs($this->user)
+            ->getJson(route('api.categories.check', ['lab' => '..', 'category' => 'Web']))
+            ->assertStatus(422);
+
+        $this->actingAs($this->user)
+            ->getJson(route('api.categories.check', ['lab' => 'Lab', 'category' => '%2E%2E']))
+            ->assertStatus(422);
+    }
+
+    public function test_evidence_kind_lainya_roundtrips(): void
+    {
+        $challenge = $this->storeWriteup([
+            'evidence' => [
+                ['id' => 'ev1', 'label' => 'Tangkapan', 'kind' => 'lainya', 'content' => 'isi bukti'],
+            ],
+        ]);
+
+        $json = json_decode((string) Storage::disk('cyber')->get($this->jsonPath($challenge)), true);
+        $this->assertSame('lainya', $json['evidence'][0]['kind']);
+    }
 }

@@ -94,6 +94,13 @@ export default function ChallengeIndex({ challenges }: { challenges: any }) {
                                     </div>
                                 </div>
                                 <div className="flex shrink-0 items-center gap-2">
+                                    {challenge.question_stats && challenge.question_stats.total > 0 && (
+                                        <ProgressBadge
+                                            solved={challenge.question_stats.solved}
+                                            total={challenge.question_stats.total}
+                                            status={challenge.question_stats.status}
+                                        />
+                                    )}
                                     <Badge variant="outline">{challenge.kategori}</Badge>
                                     <Badge variant="outline">{challenge.lab}</Badge>
                                 </div>
@@ -105,5 +112,27 @@ export default function ChallengeIndex({ challenges }: { challenges: any }) {
 
             {challenges.links && <Pagination links={challenges.links} />}
         </AuthenticatedLayout>
+    );
+}
+
+function ProgressBadge({ solved, total, status }: { solved: number; total: number; status: string }) {
+    const tone =
+        status === 'completed'
+            ? 'bg-success/10 text-success ring-success/25'
+            : status === 'progress'
+              ? 'bg-accent/10 text-accent ring-accent/25'
+              : 'bg-faint/10 text-faint ring-faint/25';
+
+    return (
+        <span
+            className={[
+                'inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide ring-1 ring-inset',
+                tone,
+            ].join(' ')}
+            title={`${solved} dari ${total} question solved`}
+        >
+            <span aria-hidden="true">{status === 'completed' ? '✓' : ''}</span>
+            {solved}/{total}
+        </span>
     );
 }

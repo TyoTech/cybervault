@@ -1,12 +1,17 @@
+import { useState } from 'react';
 import Section from '@/Components/UI/Section';
 import StatusBadge, {
     experimentStatusTone,
     evidenceKindTone,
     hypothesisStatusTone,
+    questionStatusTone,
     stepTypeTone,
 } from '@/Components/Writeup/StatusBadge';
 import MarkdownViewer from '@/Components/UI/MarkdownViewer';
-import { WriteupData } from '@/Components/Writeup/types';
+import { QuestionItem, WriteupData } from '@/Components/Writeup/types';
+import { questionStats } from '@/Utils/questionStats';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { cn } from '@/Utils/cn';
 
 /**
  * Tampilan READ-ONLY structured writeup (halaman Show). Semua konten tetap
@@ -40,6 +45,8 @@ export default function WriteupView({ value }: { value: WriteupData }) {
 
     return (
         <div className="space-y-4">
+            {value.questions.length > 0 && <QuestionsView questions={value.questions} />}
+
             {(value.goal.problem.trim() !== '' ||
                 value.goal.objective.trim() !== '' ||
                 value.goal.proof.trim() !== '') && (
@@ -236,5 +243,201 @@ function CodeFences({ rows }: { rows: Array<[string, string]> }) {
                 </div>
             ))}
         </div>
+    );
+}
+
+/**
+ * Daftar Question/Objective read-only (halaman Show).
+ *
+ * - Progress otomatis (solved / total).
+ * - Navigasi Previous / Next Question.
+ * - Result/flag disembunyikan sampai user memilih "Show Answer".
+ */
+function QuestionsView({ questions }: { questions: QuestionItem[] }) {
+    const stats = questionStats(questions);
+    const [activeIndex, setActiveIndex] = useState(0);
+    const [revealed, setRevealed] = useState<Record<string, boolean>>({});
+
+    const active = Math.min(activeIndex, questions.length - 1);
+
+    const prev = () => setActiveIndex((i) => Math.max(i - 1, 0));
+    const next = () => setActiveIndex((i) => Math.min(i + 1, questions.length - 1));
+
+    return (
+        <Section
+            title="Questions / Objectives"
+            description={`${stats.solved} / ${stats.total} solved (${stats.percent}%)`}
+            count={questions.length}
+            idPrefix="v-questions"
+            defaultOpen
+        >
+            <div
+                className="mb-3 h-1.5 overflow-hidden rounded-full bg-faint/10"
+                role="progressbar"
+                aria-valuenow={stats.percent}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label="Progress question"
+            >
+                <div
+                    className={cn('h-full rounded-full', stats.percent === 100 ? 'bg-success' : 'bg-accent')}
+                    style={{ width: `${stats.percent}%` }}
+                />
+            </div>
+
+            <div className="mb-3 flex items-center justify-between gap-2">
+                <NavButton onClick={prev} disabled={active === 0} label="Question sebelumnya">
+                    <ChevronLeft className="h-4 w-4" /> Previous
+                </NavButton>
+                <span className="text-xs font-mono text-faint">
+                    Question {active + 1} / {questions.length}
+                </span>
+                <NavButton onClick={next} disabled={active >= questions.length - 1} label="Question berikutnya">
+                    Next <ChevronRight className="h-4 w-4" />
+                </NavButton>
+            </div>
+
+            <ol className="space-y-2">
+                {questions.map((q, i) => {
+                    const isActive = i === active;
+                    const showAnswer = Boolean(revealed[q.id]);
+
+                    return (
+                        <li
+                            key={q.id}
+                            className={cn(
+                                'overflow-hidden rounded-md border',
+                                isActive ? 'border-edge bg-surface' : 'border-edge/60 bg-surface/50',
+                            )}
+                        >
+                            <button
+                                type="button"
+                                onClick={() => setActiveIndex(i)}
+                                className="flex w-full items-center gap-2 px-3 py-2.5 text-left"
+                                aria-expanded={isActive}
+                            >
+                                <span className="text-xs font-mono text-faint">Q{i + 1}</span>
+                                <span
+                                    className={cn(
+                                        'min-w-0 flex-1 truncate text-sm',
+                                        isActive ? 'text-strong' : 'text-muted',
+                                    )}
+                                >
+                                    {q.question.trim() !== '' ? q.question : `Question ${i + 1}`}
+                                </span>
+                                <StatusBadge value={q.status} tone={questionStatusTone(q.status)} />
+                            </button>
+
+                            {isActive && (
+                                <div className="space-y-3 border-t border-edge px-3 py-3">
+                                    {q.notes.trim() !== '' && <KvList rows={[['Analysis', q.notes]]} />}
+
+                                    {q.steps.length > 0 && (
+                                        <div>
+                                            <p className="mb-2 text-[11px] uppercase tracking-wide text-faint">Steps</p>
+                                            <ol className="space-y-3">
+                                                {q.steps.map((s, j) => (
+                                                    <li key={s.id} className="space-y-2 rounded-md border border-edge bg-elevated/40 p-3">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-xs font-mono text-faint">Step {j + 1}</span>
+                                                            <StatusBadge value={s.type} tone={stepTypeTone(s.type)} />
+                                                            {s.title !== '' && <span className="text-sm font-medium text-strong">{s.title}</span>}
+                                                        </div>
+                                                        <KvList
+                                                            rows={[
+                                                                ['Apa yang ingin diketahui', s.question],
+                                                                ['Tujuan langkah', s.goal],
+                                                                ['Pendekatan', s.approach],
+                                                                ['Hasil', s.result],
+                                                                ['Interpretasi', s.interpretation],
+                                                            ]}
+                                                        />
+                                                        <CodeFences
+                                                            rows={[
+                                                                ['Command / request', s.command],
+                                                                ['Output', s.output],
+                                                            ]}
+                                                        />
+                                                    </li>
+                                                ))}
+                                            </ol>
+                                        </div>
+                                    )}
+
+                                    {q.evidence.length > 0 && (
+                                        <div>
+                                            <p className="mb-2 text-[11px] uppercase tracking-wide text-faint">Evidence</p>
+                                            <ol className="space-y-3">
+                                                {q.evidence.map((ev, j) => (
+                                                    <li key={ev.id} className="overflow-hidden rounded-md border border-edge bg-elevated/40">
+                                                        <div className="flex items-center gap-2 border-b border-edge bg-elevated/60 px-3 py-1.5">
+                                                            <StatusBadge value={ev.kind} tone={evidenceKindTone(ev.kind)} />
+                                                            {ev.label !== '' && <span className="text-sm text-strong">{ev.label}</span>}
+                                                        </div>
+                                                        <pre className="whitespace-pre-wrap p-3 font-mono text-[13px] text-body">{ev.content}</pre>
+                                                    </li>
+                                                ))}
+                                            </ol>
+                                        </div>
+                                    )}
+
+                                    {q.result.trim() !== '' && (
+                                        <div>
+                                            {!showAnswer ? (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setRevealed((r) => ({ ...r, [q.id]: true }))}
+                                                    className="rounded-md border border-edge px-3 py-1.5 text-[13px] text-muted transition-colors hover:bg-surface-hover hover:text-body"
+                                                >
+                                                    Show Answer
+                                                </button>
+                                            ) : (
+                                                <div className="space-y-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setRevealed((r) => ({ ...r, [q.id]: false }))}
+                                                        className="rounded-md border border-edge px-3 py-1.5 text-[13px] text-muted transition-colors hover:bg-surface-hover hover:text-body"
+                                                    >
+                                                        Hide Answer
+                                                    </button>
+                                                    <CodeFences rows={[['Answer / Flag', q.result]]} />
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </li>
+                    );
+                })}
+            </ol>
+        </Section>
+    );
+}
+
+function NavButton({
+    children,
+    onClick,
+    disabled,
+    label,
+}: {
+    children: React.ReactNode;
+    onClick: () => void;
+    disabled: boolean;
+    label: string;
+}) {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            disabled={disabled}
+            aria-label={label}
+            className={cn(
+                'inline-flex items-center gap-1 rounded-md border border-edge px-2.5 py-1.5 text-[13px] text-muted transition-colors hover:bg-surface-hover hover:text-body',
+                disabled && 'cursor-not-allowed opacity-40',
+            )}
+        >
+            {children}
+        </button>
     );
 }

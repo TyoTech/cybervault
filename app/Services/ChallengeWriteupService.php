@@ -28,6 +28,7 @@ final class ChallengeWriteupService
 
     private const MAX_ITEMS = 50;      // batas jumlah item per list
     private const MAX_EVIDENCE = 100;  // evidence boleh lebih banyak (bukti)
+    private const MAX_QUESTIONS = 200; // batas jumlah Question/Objective per challenge
     private const MAX_TEXT = 10_000;   // batas field teks biasa
     private const MAX_LONG = 20_000;   // batas field panjang (command/output/notes/...)
     private const MAX_SHORT = 4_000;   // batas field pendek (label/pertanyaan)
@@ -115,6 +116,42 @@ final class ChallengeWriteupService
             $this->pushKeyValue($lines, 'Tools', $env['tools']);
             $this->pushKeyValue($lines, 'Catatan scope', $env['scope']);
             $lines[] = '';
+        }
+
+        if ($d['questions'] !== []) {
+            $lines[] = '## Questions / Objectives';
+            foreach ($d['questions'] as $i => $q) {
+                $label = trim($q['question']) !== ''
+                    ? $q['question']
+                    : 'Question ' . ($i + 1);
+                $status = strtoupper(str_replace('_', ' ', $q['status']));
+
+                $lines[] = '### ' . ($i + 1) . '. ' . $label . ' [' . $status . ']';
+                $this->pushKeyValue($lines, 'Analysis', $q['notes']);
+
+                foreach ($q['steps'] as $j => $step) {
+                    $stepTitle = $step['title'] !== '' ? $step['title'] : 'Step ' . ($j + 1);
+                    $lines[] = '#### Step ' . ($j + 1) . ' — ' . $stepTitle . ' [' . strtoupper($step['type'] ?: 'test') . ']';
+                    $this->pushKeyValue($lines, 'Apa yang ingin diketahui', $step['question']);
+                    $this->pushKeyValue($lines, 'Tujuan langkah', $step['goal']);
+                    $this->pushKeyValue($lines, 'Pendekatan', $step['approach']);
+                    $this->pushCodeBlock($lines, 'Command / request', $step['command']);
+                    $this->pushCodeBlock($lines, 'Output', $step['output']);
+                    $this->pushKeyValue($lines, 'Hasil', $step['result']);
+                    $this->pushKeyValue($lines, 'Interpretasi', $step['interpretation']);
+                }
+
+                foreach ($q['evidence'] as $j => $ev) {
+                    $evLabel = $ev['label'] !== '' ? $ev['label'] : 'Evidence ' . ($j + 1);
+                    $lines[] = '**Bukti ' . ($j + 1) . ' — ' . $evLabel . ' (' . $ev['kind'] . '):**';
+                    $lines[] = '```';
+                    $lines[] = rtrim($ev['content']);
+                    $lines[] = '```';
+                }
+
+                $this->pushKeyValue($lines, 'Answer / Flag', $q['result']);
+                $lines[] = '';
+            }
         }
 
         if ($d['hypotheses'] !== []) {
@@ -261,6 +298,7 @@ final class ChallengeWriteupService
             'lessonLearned' => $lessonLearned,
             'references' => $references,
             'notes' => $notes,
+            'questions' => $this->normalizeQuestions($data['questions'] ?? null),
         ];
     }
 
@@ -363,7 +401,7 @@ final class ChallengeWriteupService
     /** @return list<array{id: string, label: string, kind: string, content: string}> */
     private function normalizeEvidence(mixed $items): array
     {
-        $kinds = ['command', 'output', 'request', 'response', 'error', 'log'];
+        $kinds = ['command', 'output', 'request', 'response', 'error', 'log', 'lainya'];
         $out = [];
 
         foreach ((array) $items as $item) {
@@ -421,6 +459,113 @@ final class ChallengeWriteupService
         }
 
         return $out;
+    }
+
+    /**
+     * Question/Objective — unit pekerjaan di dalam sebuah Challenge.
+     *
+     * Struktur per item MENGGUNAKAN blok existing (steps = StepItem, evidence =
+     * EvidenceItem) ditambah field khusus question: teks soal/objective,
+     * analysis (`notes` — konsisten dengan nama top-level), jawaban/flag
+     * opsional (`result`), dan status {unsolved,in_progress,solved}.
+     *
+     * Guard:
+     * - jumlah dibatasi MAX_QUESTIONS (challenge besar seperti Natas 20 tetap aman);
+     * - whitelist key: `order` tidak bisa dipalsukan (urutan = posisi array);
+     * - item tanpa isi sama sekali dibuang.
+     *
+     * @return list<array{
+     *   id: string,
+     *   order: int,
+     *   question: string,
+     *   notes: string,
+     *   status: string,
+     *   result: string,
+     *   steps: list<array<string, string>>,
+     *   evidence: list<array{id: string, label: string, kind: string, content: string}>,
+     * }>
+     */
+    private function normalizeQuestions(mixed $items): array
+    {
+        $statuses = ['unsolved', 'in_progress', 'solved'];
+        $out = [];
+
+        foreach ((array) $items as $index => $item) {
+            if (count($out) >= self::MAX_QUESTIONS) {
+                break;
+            }
+
+            if (! is_array($item)) {
+                continue;
+            }
+
+            $row = [
+                'id' => $this->itemId($item['id'] ?? null),
+                'order' => $index + 1,
+                'question' => $this->cap((string) ($item['question'] ?? ''), self::MAX_SHORT),
+                'notes' => $this->cap((string) ($item['notes'] ?? ''), self::MAX_LONG),
+                'status' => in_array($item['status'] ?? null, $statuses, true) ? $item['status'] : 'unsolved',
+                'result' => $this->cap((string) ($item['result'] ?? ''), self::MAX_LONG),
+                'steps' => $this->normalizeSteps($item['steps'] ?? null),
+                'evidence' => $this->normalizeEvidence($item['evidence'] ?? null),
+            ];
+
+            $hasContent = trim($row['question']) !== ''
+                || trim($row['notes']) !== ''
+                || trim($row['result']) !== ''
+                || $row['steps'] !== []
+                || $row['evidence'] !== [];
+
+            if (! $hasContent) {
+                continue;
+            }
+
+            $out[] = $row;
+        }
+
+        return $out;
+    }
+
+    /**
+     * Statistik progress Question/Objective.
+     *
+     * @param array<string, mixed> $data
+     * @return array{total: int, solved: int, inProgress: int, unsolved: int, percent: int, status: string}
+     */
+    public function questionStats(array $data): array
+    {
+        $d = $this->normalize($data);
+        $questions = $d['questions'];
+
+        $solved = 0;
+        $inProgress = 0;
+
+        foreach ($questions as $q) {
+            if ($q['status'] === 'solved') {
+                $solved++;
+            } elseif ($q['status'] === 'in_progress') {
+                $inProgress++;
+            }
+        }
+
+        $total = count($questions);
+        $percent = $total > 0 ? (int) round(($solved / $total) * 100) : 0;
+
+        $status = match (true) {
+            $total === 0 => 'none',
+            $solved === $total => 'completed',
+            $solved > 0 || $inProgress > 0 => 'progress',
+            default => 'open',
+        };
+
+        return [
+            'total' => $total,
+            'solved' => $solved,
+            'inProgress' => $inProgress,
+            'unsolved' => $total - $solved - $inProgress,
+            'percent' => $percent,
+            'status' => $status,
+        ];
     }
 
     // ---------------------------------------------------------------------

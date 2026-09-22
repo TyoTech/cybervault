@@ -3,7 +3,7 @@ import { Head, Link, router, useForm } from '@inertiajs/react';
 import Button from '@/Components/UI/Button';
 import Badge from '@/Components/UI/Badge';
 import { ArrowLeft, Edit, FolderOpen, Trash2 } from 'lucide-react';
-import { AttemptStatus, EvidenceBlock, HypothesisStatus, WriteupContent, WriteupNote } from '@/types/writeup';
+import { AttemptStatus, EvidenceBlock, HypothesisStatus, LessonLearned, WriteupContent, WriteupNote } from '@/types/writeup';
 import { ReactNode } from 'react';
 
 const HYP_BADGE: Record<HypothesisStatus, { variant: any; label: string }> = {
@@ -44,7 +44,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 export default function WriteupShow({ note }: { note: WriteupNote }) {
     const { delete: destroy, processing } = useForm();
     const w = (note.content_json ?? {}) as Partial<WriteupContent>;
-    const ll = w.lesson_learned ?? {};
+    const ll: Partial<LessonLearned> = w.lesson_learned ?? {};
 
     const handleDelete = () => {
         if (confirm('Hapus writeup beserta file DOCX-nya?')) {

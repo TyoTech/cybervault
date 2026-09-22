@@ -29,7 +29,7 @@ class AppServiceProvider extends ServiceProvider
         Model::shouldBeStrict(! app()->isProduction());
 
         Storage::extend('cyber', function ($app, $config) {
-            $config['root'] = app(CyberStorageService::class)->root();
+            $config['root'] ??= app(CyberStorageService::class)->root();
 
             return app('filesystem')->createLocalDriver($config);
         });

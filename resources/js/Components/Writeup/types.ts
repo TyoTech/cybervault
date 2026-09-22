@@ -8,7 +8,21 @@
 export type HypothesisStatus = 'hypothesis' | 'verified' | 'rejected';
 export type StepType = 'hypothesis' | 'test' | 'fact' | 'result';
 export type ExperimentStatus = 'successful' | 'failed' | 'inconclusive';
-export type EvidenceKind = 'command' | 'output' | 'request' | 'response' | 'error' | 'log';
+export type EvidenceKind = 'command' | 'output' | 'request' | 'response' | 'error' | 'log' | 'lainya';
+export type QuestionStatus = 'unsolved' | 'in_progress' | 'solved';
+
+export const QUESTION_STATUSES: QuestionStatus[] = ['unsolved', 'in_progress', 'solved'];
+
+export interface QuestionItem {
+    id: string;
+    order: number;
+    question: string;
+    notes: string;
+    status: QuestionStatus;
+    result: string;
+    steps: StepItem[];
+    evidence: EvidenceItem[];
+}
 
 export interface GoalSection {
     problem: string;
@@ -93,6 +107,7 @@ export interface WriteupData {
     lessonLearned: LessonLearnedSection;
     references: string;
     notes: string;
+    questions: QuestionItem[];
 }
 
 export function uid(): string {
@@ -132,6 +147,7 @@ export function emptyWriteup(): WriteupData {
         },
         references: '',
         notes: '',
+        questions: [],
     };
 }
 
@@ -167,6 +183,43 @@ export function writeupFromRaw(raw: unknown): WriteupData {
     const lessonLearned = nested(source.lessonLearned);
     const ll = lessonLearned;
 
+    const parseStep = (i: Record<string, unknown>): StepItem => {
+        const type = ['hypothesis', 'fact', 'result'].includes(str(i.type)) ? (str(i.type) as StepType) : 'test';
+        return {
+            id: str(i.id) || uid(),
+            title: str(i.title),
+            question: str(i.question),
+            goal: str(i.goal),
+            approach: str(i.approach),
+            command: str(i.command),
+            output: str(i.output),
+            result: str(i.result),
+            interpretation: str(i.interpretation),
+            type,
+        };
+    };
+
+    const parseEvidence = (i: Record<string, unknown>): EvidenceItem => {
+        const kind = ['command', 'output', 'request', 'response', 'error', 'log', 'lainya'].includes(str(i.kind))
+            ? (str(i.kind) as EvidenceKind)
+            : 'log';
+        return { id: str(i.id) || uid(), label: str(i.label), kind, content: str(i.content) };
+    };
+
+    const parseQuestion = (i: Record<string, unknown>): QuestionItem => {
+        const status = ['solved', 'in_progress'].includes(str(i.status)) ? (str(i.status) as QuestionStatus) : 'unsolved';
+        return {
+            id: str(i.id) || uid(),
+            order: typeof i.order === 'number' ? i.order : 0,
+            question: str(i.question),
+            notes: str(i.notes),
+            status,
+            result: str(i.result),
+            steps: items<StepItem>(i.steps, parseStep),
+            evidence: items<EvidenceItem>(i.evidence, parseEvidence),
+        };
+    };
+
     return {
         goal: {
             problem: str(goal.problem),
@@ -186,21 +239,7 @@ export function writeupFromRaw(raw: unknown): WriteupData {
             const status = ['verified', 'rejected'].includes(str(i.status)) ? (str(i.status) as HypothesisStatus) : 'hypothesis';
             return { id: str(i.id) || uid(), text: str(i.text), status };
         }),
-        steps: items<StepItem>(source.steps, (i) => {
-            const type = ['hypothesis', 'fact', 'result'].includes(str(i.type)) ? (str(i.type) as StepType) : 'test';
-            return {
-                id: str(i.id) || uid(),
-                title: str(i.title),
-                question: str(i.question),
-                goal: str(i.goal),
-                approach: str(i.approach),
-                command: str(i.command),
-                output: str(i.output),
-                result: str(i.result),
-                interpretation: str(i.interpretation),
-                type,
-            };
-        }),
+        steps: items<StepItem>(source.steps, parseStep),
         experiments: items<ExperimentItem>(source.experiments, (i) => {
             const status = ['successful', 'failed'].includes(str(i.status)) ? (str(i.status) as ExperimentStatus) : 'inconclusive';
             return {
@@ -217,12 +256,7 @@ export function writeupFromRaw(raw: unknown): WriteupData {
                 interpretation: str(i.interpretation),
             };
         }),
-        evidence: items<EvidenceItem>(source.evidence, (i) => {
-            const kind = ['command', 'output', 'request', 'response', 'error', 'log'].includes(str(i.kind))
-                ? (str(i.kind) as EvidenceKind)
-                : 'log';
-            return { id: str(i.id) || uid(), label: str(i.label), kind, content: str(i.content) };
-        }),
+        evidence: items<EvidenceItem>(source.evidence, parseEvidence),
         strategyChanges: textItems(source.strategyChanges),
         riskImpact: str(source.riskImpact),
         recommendations: textItems(source.recommendations),
@@ -236,5 +270,6 @@ export function writeupFromRaw(raw: unknown): WriteupData {
         },
         references: str(source.references),
         notes: str(source.notes),
+        questions: items<QuestionItem>(source.questions, parseQuestion),
     };
 }

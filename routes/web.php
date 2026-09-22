@@ -24,6 +24,9 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('notes', App\Http\Controllers\NoteController::class);
     Route::resource('challenges', App\Http\Controllers\ChallengeController::class);
+    Route::get('/challenges/{challenge}/export/{format}', [App\Http\Controllers\ChallengeController::class, 'export'])
+        ->whereIn('format', ['json', 'md', 'txt', 'docx', 'pdf'])
+        ->name('challenges.export');
     Route::resource('payloads', App\Http\Controllers\PayloadController::class);
     Route::resource('tools', App\Http\Controllers\ToolController::class);
 

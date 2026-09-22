@@ -21,6 +21,7 @@ import {
     WriteupData,
     uid,
 } from '@/Components/Writeup/types';
+import QuestionsEditor from '@/Components/Writeup/QuestionsEditor';
 import { ChevronDown, Plus, Trash2 } from 'lucide-react';
 import { cn } from '@/Utils/cn';
 
@@ -185,6 +186,20 @@ export default function WriteupEditor({ value, onChange }: WriteupEditorProps) {
                         placeholder="lab.local / 10.10.10.10 / URL"
                     />
                 </WriteupField>
+            </Section>
+
+            {/* Questions / Objectives — unit pekerjaan (0..N; open-ended tetap normal) */}
+            <Section
+                title="Question / Objective"
+                description="Unit pekerjaan di dalam challenge. Kosongkan untuk challenge open-ended — writeup tetap normal tanpa soal."
+                count={value.questions.length}
+                idPrefix="questions"
+                defaultOpen={value.questions.length > 0}
+            >
+                <QuestionsEditor
+                    questions={value.questions}
+                    onChange={(questions) => set({ questions })}
+                />
             </Section>
 
             {/* Core: Analysis */}
